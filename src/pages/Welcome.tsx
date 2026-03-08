@@ -1,35 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { store } from "@/lib/store";
-import { featureStore } from "@/lib/store-features";
-import { expenseStore } from "@/lib/store-expenses";
 import logo from "@/assets/rozanapay-logo.png";
 
 export default function Welcome() {
   const navigate = useNavigate();
-
-  const handleGetStarted = () => {
-    navigate("/onboarding/phone");
-  };
-
-  const handleDemo = () => {
-    const demoUser = {
-      id: "demo-user",
-      name: "Ramesh Kumar",
-      phone: "9876543210",
-      age: 32,
-      occupation: "Auto Driver",
-      city: "Delhi",
-      incomeType: "daily" as const,
-      createdAt: new Date().toISOString(),
-      creditScore: 450,
-    };
-    store.setUser(demoUser);
-    store.seedDemoData();
-    featureStore.seedFeatureData();
-    expenseStore.seedData();
-    store.setOnboarded(true);
-    navigate("/dashboard");
-  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 gradient-hero text-primary-foreground">
@@ -44,16 +17,10 @@ export default function Welcome() {
         </p>
 
         <button
-          onClick={handleGetStarted}
+          onClick={() => navigate("/onboarding/phone")}
           className="w-full py-4 rounded-xl bg-card text-primary font-bold text-lg shadow-elevated active:scale-[0.98] transition-transform mb-3"
         >
           Get Started
-        </button>
-        <button
-          onClick={handleDemo}
-          className="w-full py-3 rounded-xl border-2 border-primary-foreground/30 text-primary-foreground font-semibold text-base active:scale-[0.98] transition-transform"
-        >
-          Try Demo
         </button>
 
         <p className="text-xs opacity-60 mt-8">

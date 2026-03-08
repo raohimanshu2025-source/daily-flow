@@ -14,7 +14,462 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bill_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          provider: string
+          status: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date?: string
+          id?: string
+          provider: string
+          status?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          provider?: string
+          status?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bnpl_orders: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          daily_repayment: number
+          duration_days: number
+          id: string
+          status: string | null
+          total_repaid: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          daily_repayment: number
+          duration_days: number
+          id?: string
+          status?: string | null
+          total_repaid?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          daily_repayment?: number
+          duration_days?: number
+          id?: string
+          status?: string | null
+          total_repaid?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gold_investments: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          date: string
+          gold_grams: number
+          id: string
+          price_per_gram: number
+          user_id: string
+        }
+        Insert: {
+          amount_inr: number
+          created_at?: string
+          date?: string
+          gold_grams: number
+          id?: string
+          price_per_gram: number
+          user_id: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          date?: string
+          gold_grams?: number
+          id?: string
+          price_per_gram?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      group_savings: {
+        Row: {
+          created_at: string
+          current_round: number
+          id: string
+          members: number
+          monthly_contribution: number
+          name: string
+          status: string | null
+          total_pool: number
+          total_rounds: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_round?: number
+          id?: string
+          members?: number
+          monthly_contribution: number
+          name: string
+          status?: string | null
+          total_pool?: number
+          total_rounds: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_round?: number
+          id?: string
+          members?: number
+          monthly_contribution?: number
+          name?: string
+          status?: string | null
+          total_pool?: number
+          total_rounds?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      income_logs: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          payment_type: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date?: string
+          id?: string
+          payment_type?: string | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          payment_type?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      insurance_policies: {
+        Row: {
+          coverage_amount: number
+          created_at: string
+          daily_premium: number
+          end_date: string
+          id: string
+          start_date: string
+          status: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          coverage_amount: number
+          created_at?: string
+          daily_premium: number
+          end_date: string
+          id?: string
+          start_date?: string
+          status?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          coverage_amount?: number
+          created_at?: string
+          daily_premium?: number
+          end_date?: string
+          id?: string
+          start_date?: string
+          status?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      loans: {
+        Row: {
+          amount: number
+          applied_at: string
+          approved_at: string | null
+          created_at: string
+          due_date: string | null
+          duration: number
+          id: string
+          interest_rate: number
+          repaid_amount: number
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          applied_at?: string
+          approved_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          duration: number
+          id?: string
+          interest_rate?: number
+          repaid_amount?: number
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          applied_at?: string
+          approved_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          duration?: number
+          id?: string
+          interest_rate?: number
+          repaid_amount?: number
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          age: number | null
+          city: string | null
+          created_at: string
+          credit_score: number | null
+          id: string
+          income_type: string | null
+          name: string
+          occupation: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age?: number | null
+          city?: string | null
+          created_at?: string
+          credit_score?: number | null
+          id?: string
+          income_type?: string | null
+          name?: string
+          occupation?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: number | null
+          city?: string | null
+          created_at?: string
+          credit_score?: number | null
+          id?: string
+          income_type?: string | null
+          name?: string
+          occupation?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rewards: {
+        Row: {
+          coins: number
+          created_at: string
+          date: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          coins: number
+          created_at?: string
+          date?: string
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          date?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      savings_goals: {
+        Row: {
+          auto_save_amount: number
+          category: string | null
+          created_at: string
+          current_amount: number
+          id: string
+          name: string
+          target_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_save_amount?: number
+          category?: string | null
+          created_at?: string
+          current_amount?: number
+          id?: string
+          name: string
+          target_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_save_amount?: number
+          category?: string | null
+          created_at?: string
+          current_amount?: number
+          id?: string
+          name?: string
+          target_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string
+          id: string
+          status: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          status?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          status?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
