@@ -159,6 +159,11 @@ export default function PhoneLogin() {
                     <span className="text-muted-foreground">{isSignUp ? 'Already have an account? ' : "Don't have an account? "}</span>
                     <span className="text-primary">{isSignUp ? 'Sign In' : 'Sign Up'}</span>
                   </button>
+                  {!isSignUp && (
+                    <button onClick={() => navigate("/forgot-password")} className="w-full text-center text-xs text-muted-foreground font-semibold py-1 hover:text-primary transition-colors">
+                      Forgot password? 🔑
+                    </button>
+                  )}
                 </div>
               )}
             </motion.div>

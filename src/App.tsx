@@ -8,6 +8,9 @@ import Welcome from "./pages/Welcome";
 import PhoneLogin from "./pages/onboarding/PhoneLogin";
 import OtpVerify from "./pages/onboarding/OtpVerify";
 import ProfileSetup from "./pages/onboarding/ProfileSetup";
+import ForgotPassword from "./pages/onboarding/ForgotPassword";
+import ResetPassword from "./pages/onboarding/ResetPassword";
+import VerifyEmail from "./pages/onboarding/VerifyEmail";
 import Dashboard from "./pages/Dashboard";
 import Income from "./pages/Income";
 import Savings from "./pages/Savings";
@@ -28,19 +31,25 @@ import CreditExport from "./pages/CreditExport";
 import SmartNudges from "./pages/SmartNudges";
 import Expenses from "./pages/Expenses";
 import Notifications from "./pages/Notifications";
+import KycUpload from "./pages/KycUpload";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse-soft text-primary text-lg font-semibold">Loading...</div></div>;
-  return user ? <>{children}</> : <Navigate to="/" replace />;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-primary text-lg font-black">Loading...</div></div>;
+  if (!user) return <Navigate to="/" replace />;
+  // Email verification enforcement: if signed up with email and not confirmed
+  if (user.email && !user.email_confirmed_at && user.app_metadata?.provider === 'email') {
+    return <Navigate to="/verify-email" replace />;
+  }
+  return <>{children}</>;
 }
 
 function HomeRoute() {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse-soft text-primary text-lg font-semibold">Loading...</div></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-primary text-lg font-black">Loading...</div></div>;
   return user ? <Navigate to="/dashboard" replace /> : <Welcome />;
 }
 
@@ -50,6 +59,9 @@ function AppRoutes() {
       <Route path="/" element={<HomeRoute />} />
       <Route path="/onboarding/phone" element={<PhoneLogin />} />
       <Route path="/onboarding/otp" element={<OtpVerify />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/onboarding/profile" element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/income" element={<ProtectedRoute><Income /></ProtectedRoute>} />
@@ -70,6 +82,7 @@ function AppRoutes() {
       <Route path="/group-savings" element={<ProtectedRoute><GroupSavingsPage /></ProtectedRoute>} />
       <Route path="/credit-export" element={<ProtectedRoute><CreditExport /></ProtectedRoute>} />
       <Route path="/smart-nudges" element={<ProtectedRoute><SmartNudges /></ProtectedRoute>} />
+      <Route path="/kyc" element={<ProtectedRoute><KycUpload /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
