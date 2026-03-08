@@ -1,138 +1,122 @@
+import { useState, useEffect } from "react";
 import MobileLayout from "@/components/MobileLayout";
-import { Brain, TrendingUp, PiggyBank, AlertTriangle, Target, Lightbulb, ArrowRight } from "lucide-react";
-import { store } from "@/lib/store";
-import { featureStore } from "@/lib/store-features";
+import { Brain, TrendingUp, PiggyBank, AlertTriangle, Target, Lightbulb, ArrowRight, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
 
-function generateNudges() {
-  const balance = store.getBalance();
-  const todayIncome = store.getTodayIncome();
-  const totalSavings = store.getTotalSavings();
-  const activeLoans = store.getActiveLoans();
-  const income = store.getIncome();
-  const savings = store.getSavings();
-  const rewardCoins = featureStore.getRewardCoins();
-
-  const nudges: { icon: any; title: string; message: string; type: 'tip' | 'alert' | 'goal' | 'reward'; action?: string }[] = [];
-
-  // Income-based nudges
-  if (todayIncome > 0) {
-    const saveAmount = Math.round(todayIncome * 0.1);
-    nudges.push({
-      icon: TrendingUp,
-      title: "Smart Save Suggestion",
-      message: `You earned ₹${todayIncome.toLocaleString("en-IN")} today! Save ₹${saveAmount} (10%) to build your safety net faster.`,
-      type: 'tip',
-      action: 'Save Now',
-    });
-  } else {
-    nudges.push({
-      icon: Lightbulb,
-      title: "Log Your Income",
-      message: "Don't forget to log today's earnings! Consistent tracking improves your credit score.",
-      type: 'tip',
-      action: 'Log Income',
-    });
-  }
-
-  // Savings nudges
-  const incompleteSavings = savings.filter(g => g.currentAmount < g.targetAmount);
-  if (incompleteSavings.length > 0) {
-    const closest = incompleteSavings.sort((a, b) => (b.currentAmount / b.targetAmount) - (a.currentAmount / a.targetAmount))[0];
-    const pct = Math.round((closest.currentAmount / closest.targetAmount) * 100);
-    nudges.push({
-      icon: Target,
-      title: `${closest.name} - ${pct}% Done!`,
-      message: `You're ₹${(closest.targetAmount - closest.currentAmount).toLocaleString("en-IN")} away from your ${closest.name} goal. Keep going! 🎯`,
-      type: 'goal',
-    });
-  }
-
-  // Loan alerts
-  if (activeLoans.length > 0) {
-    const overdueRisk = activeLoans.filter(l => l.status === 'active');
-    if (overdueRisk.length > 0) {
-      nudges.push({
-        icon: AlertTriangle,
-        title: "Loan Repayment Due",
-        message: `You have ${overdueRisk.length} active loan(s). Timely repayment boosts your credit score by +50 points!`,
-        type: 'alert',
-        action: 'Repay Now',
-      });
-    }
-  }
-
-  // Rewards nudge
-  if (rewardCoins >= 100) {
-    nudges.push({
-      icon: PiggyBank,
-      title: "Redeem Your Coins!",
-      message: `You have ${rewardCoins} reward coins! Redeem for mobile recharge or bill payments.`,
-      type: 'reward',
-      action: 'Redeem',
-    });
-  }
-
-  // Weekly pattern
-  if (income.length >= 7) {
-    const weekTotal = income.slice(0, 7).reduce((s, i) => s + i.amount, 0);
-    const avgDaily = Math.round(weekTotal / 7);
-    nudges.push({
-      icon: Brain,
-      title: "Weekly Insight",
-      message: `Your average daily income this week: ₹${avgDaily.toLocaleString("en-IN")}. ${avgDaily > 500 ? 'Great consistency! 💪' : 'Try diversifying income sources for stability.'}`,
-      type: 'tip',
-    });
-  }
-
-  // General tips
-  nudges.push({
-    icon: Lightbulb,
-    title: "Pro Tip",
-    message: totalSavings > 0
-      ? `You've saved ₹${totalSavings.toLocaleString("en-IN")} so far! Users who save daily reach their goals 3x faster.`
-      : "Start with just ₹10/day savings. Small amounts grow into big safety nets! 🌱",
-    type: 'tip',
-  });
-
-  return nudges;
+interface Nudge {
+  title: string;
+  message: string;
+  type: 'tip' | 'alert' | 'goal' | 'reward';
+  emoji: string;
+  action_label?: string;
+  action_route?: string;
 }
 
-const typeColors = {
-  tip: 'bg-primary/10 text-primary',
-  alert: 'bg-destructive/10 text-destructive',
-  goal: 'bg-success/10 text-success',
-  reward: 'bg-warning/10 text-warning',
+const typeStyles: Record<string, string> = {
+  tip: 'bg-primary/10 border-primary/20',
+  alert: 'bg-destructive/10 border-destructive/20',
+  goal: 'bg-success/10 border-success/20',
+  reward: 'bg-warning/10 border-warning/20',
+};
+
+const typeIcons: Record<string, any> = {
+  tip: Lightbulb,
+  alert: AlertTriangle,
+  goal: Target,
+  reward: PiggyBank,
 };
 
 export default function SmartNudges() {
-  const nudges = generateNudges();
+  const [nudges, setNudges] = useState<Nudge[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const fetchNudges = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('smart-nudges');
+      if (error) throw error;
+      if (data?.nudges) {
+        setNudges(data.nudges);
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Could not load smart nudges");
+      // Fallback nudges
+      setNudges([
+        { title: "Start Tracking", message: "Log your daily income to unlock personalized insights!", type: "tip", emoji: "📝" },
+        { title: "Save Daily", message: "Even ₹10/day adds up to ₹3,650/year. Start small!", type: "goal", emoji: "🎯" },
+        { title: "Build Credit", message: "Timely loan repayments boost your credit score significantly.", type: "tip", emoji: "📈" },
+      ]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchNudges(); }, [user]);
 
   return (
     <MobileLayout>
       <div className="px-5 pt-6">
-        <h1 className="text-xl font-bold text-foreground mb-1">Smart Insights</h1>
-        <p className="text-sm text-muted-foreground mb-5">AI-powered tips for better finances</p>
-
-        <div className="space-y-3 mb-6">
-          {nudges.map((nudge, i) => (
-            <div key={i} className="bg-card rounded-xl p-4 shadow-card animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
-              <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${typeColors[nudge.type]}`}>
-                  <nudge.icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground mb-1">{nudge.title}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{nudge.message}</p>
-                  {nudge.action && (
-                    <button className="mt-2 text-xs font-semibold text-primary flex items-center gap-1">
-                      {nudge.action} <ArrowRight className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-              </div>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center">
+              <ArrowLeft className="h-4 w-4 text-foreground" />
+            </button>
+            <div>
+              <h1 className="text-xl font-black text-foreground">Smart Insights 🧠</h1>
+              <p className="text-xs text-muted-foreground">AI-powered tips for your finances</p>
             </div>
-          ))}
+          </div>
+          <button onClick={fetchNudges} disabled={loading}
+            className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center disabled:opacity-50">
+            <RefreshCw className={`h-4 w-4 text-primary ${loading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center shadow-glow">
+              <Brain className="h-7 w-7 text-primary-foreground animate-pulse" />
+            </div>
+            <p className="text-sm font-bold text-foreground">Analyzing your finances...</p>
+            <p className="text-xs text-muted-foreground">AI is generating personalized insights</p>
+          </div>
+        ) : (
+          <div className="space-y-3 mb-6">
+            {nudges.map((nudge, i) => {
+              const Icon = typeIcons[nudge.type] || Lightbulb;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  className={`rounded-2xl p-4 border shadow-card ${typeStyles[nudge.type] || typeStyles.tip}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">{nudge.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-foreground mb-1">{nudge.title}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{nudge.message}</p>
+                      {nudge.action_label && nudge.action_route && (
+                        <button onClick={() => navigate(nudge.action_route!)}
+                          className="mt-2 text-xs font-bold text-primary flex items-center gap-1">
+                          {nudge.action_label} <ArrowRight className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </MobileLayout>
   );

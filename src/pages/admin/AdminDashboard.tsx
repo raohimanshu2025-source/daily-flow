@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
-import { Users, CreditCard, BarChart3, Shield, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, XCircle, Search } from "lucide-react";
+import { Users, CreditCard, BarChart3, Shield, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, XCircle, Search, ShoppingCart } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { toast } from "sonner";
 
-type Tab = "overview" | "users" | "loans" | "risk";
+type Tab = "overview" | "users" | "loans" | "bnpl" | "risk";
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("overview");
@@ -42,6 +43,7 @@ export default function AdminDashboard() {
     { id: "overview" as Tab, icon: BarChart3, label: "Overview" },
     { id: "users" as Tab, icon: Users, label: "Users" },
     { id: "loans" as Tab, icon: CreditCard, label: "Loans" },
+    { id: "bnpl" as Tab, icon: ShoppingCart, label: "BNPL" },
     { id: "risk" as Tab, icon: Shield, label: "Risk" },
   ];
 
@@ -72,6 +74,7 @@ export default function AdminDashboard() {
         {tab === "overview" && <OverviewTab />}
         {tab === "users" && <UsersTab />}
         {tab === "loans" && <LoansTab />}
+        {tab === "bnpl" && <BnplTab />}
         {tab === "risk" && <RiskTab />}
       </div>
     </div>
@@ -353,6 +356,101 @@ function LoansTab() {
                         loan.status === 'repaid' ? 'bg-primary/10 text-primary' :
                         'bg-muted text-muted-foreground'
                       }`}>{loan.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BnplTab() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { loadOrders(); }, []);
+
+  const loadOrders = async () => {
+    const { data } = await supabase.from('bnpl_orders').select('*').order('created_at', { ascending: false });
+    setOrders(data || []);
+    setLoading(false);
+  };
+
+  const handleAction = async (id: string, action: 'active' | 'rejected') => {
+    const { error } = await supabase.from('bnpl_orders').update({ status: action }).eq('id', id);
+    if (error) { toast.error("Update failed"); return; }
+    toast.success(action === 'active' ? 'BNPL approved!' : 'BNPL rejected');
+    loadOrders();
+  };
+
+  const pending = orders.filter(o => o.status === 'pending');
+  const active = orders.filter(o => o.status === 'active');
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="font-black text-foreground mb-4">Pending BNPL Approvals ({pending.length}) 🛒</h3>
+        {loading ? <p className="text-muted-foreground">Loading...</p> :
+        pending.length === 0 ? (
+          <div className="bg-card rounded-2xl p-6 text-center shadow-card border border-border/50">
+            <p className="text-3xl mb-2">✅</p>
+            <p className="text-muted-foreground text-sm">No pending BNPL applications</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pending.map(o => (
+              <motion.div key={o.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                className="bg-card rounded-2xl p-4 shadow-card border border-border/50 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex-1">
+                  <p className="font-bold text-foreground capitalize">{o.category} · ₹{o.amount.toLocaleString("en-IN")}</p>
+                  <p className="text-xs text-muted-foreground">₹{o.daily_repayment}/day for {o.duration_days} days · Applied {new Date(o.created_at).toLocaleDateString("en-IN")}</p>
+                </div>
+                <div className="flex gap-2">
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(o.id, 'active')}
+                    className="px-4 py-2 rounded-xl gradient-success text-white text-sm font-bold flex items-center gap-1">
+                    <CheckCircle className="h-4 w-4" /> Approve
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(o.id, 'rejected')}
+                    className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive text-sm font-bold flex items-center gap-1">
+                    <XCircle className="h-4 w-4" /> Reject
+                  </motion.button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-black text-foreground mb-4">Active BNPL Orders ({active.length})</h3>
+        <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Category</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Amount</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Repaid</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.filter(o => o.status !== 'pending').map(o => (
+                  <tr key={o.id} className="border-b border-border/50 last:border-0">
+                    <td className="px-4 py-3 text-sm font-bold text-foreground capitalize">{o.category}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">₹{o.amount.toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">₹{o.total_repaid.toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-1 rounded-lg font-bold ${
+                        o.status === 'active' ? 'bg-success/10 text-success' :
+                        o.status === 'completed' ? 'bg-primary/10 text-primary' :
+                        o.status === 'rejected' ? 'bg-destructive/10 text-destructive' :
+                        'bg-muted text-muted-foreground'
+                      }`}>{o.status}</span>
                     </td>
                   </tr>
                 ))}
