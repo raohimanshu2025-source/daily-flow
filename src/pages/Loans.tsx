@@ -1,39 +1,33 @@
 import { useState } from "react";
-import { store, Loan } from "@/lib/store";
+import { useLoans, useAddLoan, useProfile } from "@/hooks/use-cloud-data";
 import MobileLayout from "@/components/MobileLayout";
 import { CreditCard, X, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 const loanAmounts = [500, 1000, 2000, 5000, 10000];
-const loanDurations: Loan["duration"][] = [7, 14, 30];
+const loanDurations = [7, 14, 30];
 
 export default function Loans() {
   const [showApply, setShowApply] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(2000);
-  const [selectedDuration, setSelectedDuration] = useState<Loan["duration"]>(14);
-  const [, setRefresh] = useState(0);
+  const [selectedDuration, setSelectedDuration] = useState(14);
 
-  const loans = store.getLoans();
-  const activeLoans = store.getActiveLoans();
-  const user = store.getUser();
+  const { data: loans = [] } = useLoans();
+  const { data: profile } = useProfile();
+  const addLoan = useAddLoan();
+  const activeLoans = loans.filter(l => ['approved', 'active', 'pending'].includes(l.status || ''));
   const interestRate = 2;
   const totalRepay = selectedAmount + (selectedAmount * interestRate * selectedDuration) / (100 * 30);
 
-  const handleApply = () => {
-    const loan: Loan = {
-      id: `loan-${Date.now()}`,
-      amount: selectedAmount,
-      duration: selectedDuration,
-      interestRate,
-      status: "pending",
-      appliedAt: new Date().toISOString(),
-      repaidAmount: 0,
-    };
-    store.addLoan(loan);
-    setShowApply(false);
-    setRefresh((r) => r + 1);
+  const handleApply = async () => {
+    try {
+      await addLoan.mutateAsync({ amount: selectedAmount, duration: selectedDuration, interest_rate: interestRate });
+      setShowApply(false);
+      toast.success("Loan applied!");
+    } catch (err: any) { toast.error(err.message); }
   };
 
-  const statusConfig = {
+  const statusConfig: Record<string, any> = {
     pending: { icon: Clock, label: "Pending", className: "bg-warning/10 text-warning" },
     approved: { icon: CheckCircle, label: "Approved", className: "bg-success/10 text-success" },
     active: { icon: CreditCard, label: "Active", className: "bg-primary/10 text-primary" },
@@ -46,14 +40,13 @@ export default function Loans() {
       <div className="px-5 pt-6">
         <h1 className="text-xl font-bold text-foreground mb-4">Micro Loans</h1>
 
-        {/* Credit Score */}
         <div className="gradient-primary rounded-2xl p-5 mb-6 shadow-elevated">
           <p className="text-primary-foreground/70 text-sm mb-1">Your Credit Score</p>
-          <h2 className="text-3xl font-bold text-primary-foreground mb-2">{user?.creditScore || 300}</h2>
+          <h2 className="text-3xl font-bold text-primary-foreground mb-2">{profile?.credit_score || 300}</h2>
           <div className="w-full h-2 rounded-full bg-primary-foreground/20">
-            <div className="h-full rounded-full bg-primary-foreground transition-all" style={{ width: `${((user?.creditScore || 300) / 900) * 100}%` }} />
+            <div className="h-full rounded-full bg-primary-foreground transition-all" style={{ width: `${((profile?.credit_score || 300) / 900) * 100}%` }} />
           </div>
-          <p className="text-xs text-primary-foreground/60 mt-2">Max eligible: ₹{Math.min((user?.creditScore || 300) * 15, 10000).toLocaleString("en-IN")}</p>
+          <p className="text-xs text-primary-foreground/60 mt-2">Max eligible: ₹{Math.min((profile?.credit_score || 300) * 15, 10000).toLocaleString("en-IN")}</p>
         </div>
 
         <button onClick={() => setShowApply(true)}
@@ -61,34 +54,31 @@ export default function Loans() {
           <CreditCard className="h-5 w-5" /> Apply for Loan
         </button>
 
-        {/* Active Loans */}
         <h3 className="font-semibold text-foreground mb-3">Your Loans ({activeLoans.length} active)</h3>
         <div className="space-y-3">
           {loans.map((loan) => {
-            const cfg = statusConfig[loan.status];
+            const cfg = statusConfig[loan.status || 'pending'];
             const Icon = cfg.icon;
             return (
               <div key={loan.id} className="bg-card rounded-xl p-4 shadow-card">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 ${cfg.className}`}>
-                      <Icon className="h-3 w-3" /> {cfg.label}
-                    </div>
+                  <div className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 ${cfg.className}`}>
+                    <Icon className="h-3 w-3" /> {cfg.label}
                   </div>
                   <p className="text-lg font-bold text-foreground">₹{loan.amount.toLocaleString("en-IN")}</p>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{loan.duration} days · {loan.interestRate}% interest</span>
-                  <span>Applied {new Date(loan.appliedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                  <span>{loan.duration} days · {loan.interest_rate}% interest</span>
+                  <span>Applied {new Date(loan.applied_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                 </div>
                 {loan.status === "active" && (
                   <div className="mt-3">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="text-muted-foreground">Repaid</span>
-                      <span className="font-medium text-foreground">₹{loan.repaidAmount} / ₹{loan.amount}</span>
+                      <span className="font-medium text-foreground">₹{loan.repaid_amount} / ₹{loan.amount}</span>
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-muted">
-                      <div className="h-full rounded-full gradient-accent" style={{ width: `${(loan.repaidAmount / loan.amount) * 100}%` }} />
+                      <div className="h-full rounded-full gradient-accent" style={{ width: `${(loan.repaid_amount / loan.amount) * 100}%` }} />
                     </div>
                   </div>
                 )}
@@ -99,7 +89,6 @@ export default function Loans() {
         </div>
       </div>
 
-      {/* Apply Modal */}
       {showApply && (
         <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
           <div className="bg-card w-full max-w-md mx-auto rounded-t-3xl p-6 animate-slide-up">
@@ -113,9 +102,9 @@ export default function Loans() {
                 <div className="flex flex-wrap gap-2">
                   {loanAmounts.map((a) => (
                     <button key={a} onClick={() => setSelectedAmount(a)}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                        selectedAmount === a ? "gradient-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                      }`}>₹{a.toLocaleString("en-IN")}</button>
+                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${selectedAmount === a ? "gradient-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                      ₹{a.toLocaleString("en-IN")}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -124,9 +113,9 @@ export default function Loans() {
                 <div className="flex gap-3">
                   {loanDurations.map((d) => (
                     <button key={d} onClick={() => setSelectedDuration(d)}
-                      className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
-                        selectedDuration === d ? "gradient-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                      }`}>{d} days</button>
+                      className={`flex-1 py-3 rounded-xl font-semibold transition-all ${selectedDuration === d ? "gradient-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                      {d} days
+                    </button>
                   ))}
                 </div>
               </div>
@@ -144,9 +133,9 @@ export default function Loans() {
                   <span className="font-bold text-foreground">₹{Math.round(totalRepay).toLocaleString("en-IN")}</span>
                 </div>
               </div>
-              <button onClick={handleApply}
-                className="w-full py-4 rounded-xl gradient-primary text-primary-foreground font-bold text-lg active:scale-[0.98] transition-all">
-                Apply Now
+              <button onClick={handleApply} disabled={addLoan.isPending}
+                className="w-full py-4 rounded-xl gradient-primary text-primary-foreground font-bold text-lg active:scale-[0.98] transition-all disabled:opacity-40">
+                {addLoan.isPending ? 'Applying...' : 'Apply Now'}
               </button>
             </div>
           </div>

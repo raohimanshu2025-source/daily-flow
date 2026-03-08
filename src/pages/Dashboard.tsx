@@ -1,29 +1,35 @@
 import { useNavigate } from "react-router-dom";
-import { store } from "@/lib/store";
+import { useAuth } from "@/hooks/use-auth";
+import { useProfile, useIncomeLogs, useSavingsGoals, useLoans, useTransactions, useNotifications } from "@/hooks/use-cloud-data";
 import MobileLayout from "@/components/MobileLayout";
-import { Plus, PiggyBank, Send, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid, Sun, Moon, Languages, Minus } from "lucide-react";
-import { featureStore } from "@/lib/store-features";
-import { notificationStore } from "@/lib/notifications";
+import { Plus, PiggyBank, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid, Moon, Sun, Minus, LogOut } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/hooks/use-language";
 import { useTheme } from "@/hooks/use-theme";
-import { expenseStore } from "@/lib/store-expenses";
 import logo from "@/assets/rozanapay-logo.png";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { lang, toggle: toggleLang } = useLanguage();
   const { theme, toggle: toggleTheme } = useTheme();
-  const user = store.getUser();
-  const balance = store.getBalance();
-  const todayIncome = store.getTodayIncome();
-  const totalSavings = store.getTotalSavings();
-  const activeLoans = store.getActiveLoans();
-  const transactions = store.getTransactions().slice(0, 5);
-  const unreadNotifs = notificationStore.getUnreadCount();
+  const { signOut } = useAuth();
 
-  // Generate notifications on dashboard load
-  notificationStore.generateSmartNotifications();
+  const { data: profile } = useProfile();
+  const { data: incomes = [] } = useIncomeLogs();
+  const { data: savings = [] } = useSavingsGoals();
+  const { data: loans = [] } = useLoans();
+  const { data: transactions = [] } = useTransactions();
+  const { data: notifications = [] } = useNotifications();
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayIncome = incomes.filter(i => i.date.startsWith(todayStr)).reduce((s, i) => s + i.amount, 0);
+  const totalSavings = savings.reduce((s, g) => s + g.current_amount, 0);
+  const activeLoans = loans.filter(l => ['approved', 'active', 'pending'].includes(l.status || ''));
+  const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
+  const totalLoanBorrowed = loans.filter(l => ['approved', 'active'].includes(l.status || '')).reduce((s, l) => s + l.amount, 0);
+  const totalLoanRepaid = loans.reduce((s, l) => s + l.repaid_amount, 0);
+  const balance = totalIncome - totalSavings - totalLoanRepaid + totalLoanBorrowed;
+  const unreadNotifs = notifications.filter(n => !n.read).length;
 
   const quickActions = [
     { icon: Plus, label: t('dash.addIncome'), color: "gradient-primary", path: "/income" },
@@ -40,25 +46,22 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">
-                {user?.name?.charAt(0) || "R"}
+                {profile?.name?.charAt(0) || "R"}
               </span>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">{t('dash.greeting')}</p>
-              <p className="font-semibold text-foreground">{user?.name || "User"}</p>
+              <p className="font-semibold text-foreground">{profile?.name || "User"}</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <button onClick={toggleLang}
-              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center" title="Switch Language">
+            <button onClick={toggleLang} className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
               <span className="text-xs font-bold text-foreground">{lang === 'en' ? 'हि' : 'En'}</span>
             </button>
-            <button onClick={toggleTheme}
-              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center" title="Toggle Theme">
+            <button onClick={toggleTheme} className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
               {theme === 'light' ? <Moon className="h-4 w-4 text-muted-foreground" /> : <Sun className="h-4 w-4 text-warning" />}
             </button>
-            <button onClick={() => navigate('/notifications')}
-              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center relative">
+            <button onClick={() => navigate('/notifications')} className="w-9 h-9 rounded-full bg-muted flex items-center justify-center relative">
               <Bell className="h-4 w-4 text-muted-foreground" />
               {unreadNotifs > 0 && (
                 <div className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive flex items-center justify-center">
@@ -66,15 +69,16 @@ export default function Dashboard() {
                 </div>
               )}
             </button>
+            <button onClick={signOut} className="w-9 h-9 rounded-full bg-muted flex items-center justify-center" title="Sign Out">
+              <LogOut className="h-4 w-4 text-muted-foreground" />
+            </button>
           </div>
         </div>
 
         {/* Balance Card */}
         <div className="gradient-hero rounded-2xl p-5 mb-6 shadow-elevated animate-fade-in">
           <p className="text-primary-foreground/70 text-sm mb-1">{t('dash.balance')}</p>
-          <h2 className="text-3xl font-bold text-primary-foreground mb-4">
-            ₹{balance.toLocaleString("en-IN")}
-          </h2>
+          <h2 className="text-3xl font-bold text-primary-foreground mb-4">₹{balance.toLocaleString("en-IN")}</h2>
           <div className="flex gap-4">
             <div className="flex items-center gap-2">
               <ArrowDownLeft className="h-4 w-4 text-primary-foreground/70" />
@@ -96,11 +100,7 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div className="grid grid-cols-4 gap-3 mb-6">
           {quickActions.map((action) => (
-            <button
-              key={action.label}
-              onClick={() => navigate(action.path)}
-              className="flex flex-col items-center gap-2 animate-slide-up"
-            >
+            <button key={action.label} onClick={() => navigate(action.path)} className="flex flex-col items-center gap-2 animate-slide-up">
               <div className={`w-12 h-12 rounded-2xl ${action.color} flex items-center justify-center shadow-card`}>
                 <action.icon className="h-5 w-5 text-primary-foreground" />
               </div>
@@ -116,10 +116,9 @@ export default function Dashboard() {
               <TrendingUp className="h-4 w-4 text-success" />
               <span className="text-xs text-muted-foreground">{t('dash.creditScore')}</span>
             </div>
-            <p className="text-xl font-bold text-foreground">{user?.creditScore || 300}</p>
+            <p className="text-xl font-bold text-foreground">{profile?.credit_score || 300}</p>
             <div className="w-full h-1.5 rounded-full bg-muted mt-2">
-              <div className="h-full rounded-full gradient-accent transition-all"
-                style={{ width: `${((user?.creditScore || 300) / 900) * 100}%` }} />
+              <div className="h-full rounded-full gradient-accent transition-all" style={{ width: `${((profile?.credit_score || 300) / 900) * 100}%` }} />
             </div>
           </div>
           <div className="bg-card rounded-xl p-4 shadow-card">
@@ -128,9 +127,7 @@ export default function Dashboard() {
               <span className="text-xs text-muted-foreground">{t('dash.activeLoans')}</span>
             </div>
             <p className="text-xl font-bold text-foreground">{activeLoans.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              ₹{activeLoans.reduce((s, l) => s + l.amount, 0).toLocaleString("en-IN")} total
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">₹{activeLoans.reduce((s, l) => s + l.amount, 0).toLocaleString("en-IN")} total</p>
           </div>
         </div>
 
@@ -167,12 +164,10 @@ export default function Dashboard() {
             {transactions.length === 0 ? (
               <p className="text-center text-muted-foreground py-8 text-sm">{t('common.noData')}</p>
             ) : (
-              transactions.map((txn) => (
+              transactions.slice(0, 5).map((txn) => (
                 <div key={txn.id} className="flex items-center gap-3 bg-card rounded-xl p-3 shadow-card">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    txn.type === 'income' ? 'bg-success/10' :
-                    txn.type === 'savings' ? 'bg-primary/10' :
-                    txn.type === 'loan' ? 'bg-warning/10' : 'bg-muted'
+                    txn.type === 'income' ? 'bg-success/10' : txn.type === 'savings' ? 'bg-primary/10' : txn.type === 'loan' ? 'bg-warning/10' : 'bg-muted'
                   }`}>
                     {txn.type === 'income' ? <ArrowDownLeft className="h-5 w-5 text-success" /> :
                      txn.type === 'savings' ? <PiggyBank className="h-5 w-5 text-primary" /> :
