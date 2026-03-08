@@ -15,6 +15,17 @@ import Loans from "./pages/Loans";
 import Transactions from "./pages/Transactions";
 import Analytics from "./pages/Analytics";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import Services from "./pages/Services";
+import UpiQr from "./pages/UpiQr";
+import Bnpl from "./pages/Bnpl";
+import DigitalGold from "./pages/DigitalGold";
+import InsurancePage from "./pages/Insurance";
+import Rewards from "./pages/Rewards";
+import BillPayments from "./pages/BillPayments";
+import ChatBotPage from "./pages/ChatBot";
+import GroupSavingsPage from "./pages/GroupSavings";
+import CreditExport from "./pages/CreditExport";
+import SmartNudges from "./pages/SmartNudges";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +51,17 @@ const App = () => (
           <Route path="/loans" element={<ProtectedRoute><Loans /></ProtectedRoute>} />
           <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
           <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+          <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+          <Route path="/upi-qr" element={<ProtectedRoute><UpiQr /></ProtectedRoute>} />
+          <Route path="/bnpl" element={<ProtectedRoute><Bnpl /></ProtectedRoute>} />
+          <Route path="/gold" element={<ProtectedRoute><DigitalGold /></ProtectedRoute>} />
+          <Route path="/insurance" element={<ProtectedRoute><InsurancePage /></ProtectedRoute>} />
+          <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
+          <Route path="/bills" element={<ProtectedRoute><BillPayments /></ProtectedRoute>} />
+          <Route path="/chatbot" element={<ProtectedRoute><ChatBotPage /></ProtectedRoute>} />
+          <Route path="/group-savings" element={<ProtectedRoute><GroupSavingsPage /></ProtectedRoute>} />
+          <Route path="/credit-export" element={<ProtectedRoute><CreditExport /></ProtectedRoute>} />
+          <Route path="/smart-nudges" element={<ProtectedRoute><SmartNudges /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

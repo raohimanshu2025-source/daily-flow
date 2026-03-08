@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { store } from "@/lib/store";
 import MobileLayout from "@/components/MobileLayout";
-import { Plus, PiggyBank, Send, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell } from "lucide-react";
+import { Plus, PiggyBank, Send, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid } from "lucide-react";
+import { featureStore } from "@/lib/store-features";
 import logo from "@/assets/rozanapay-logo.png";
 
 export default function Dashboard() {
@@ -109,6 +110,29 @@ export default function Dashboard() {
             <p className="text-xs text-muted-foreground mt-1">
               ₹{activeLoans.reduce((s, l) => s + l.amount, 0).toLocaleString("en-IN")} total
             </p>
+          </div>
+        </div>
+
+        {/* Featured Services */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-foreground">Explore Services</h3>
+            <button onClick={() => navigate("/services")} className="text-sm text-primary font-medium">See All</button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+            {[
+              { icon: Coins, label: "Digital Gold", path: "/gold", color: "gradient-warm" },
+              { icon: Shield, label: "Insurance", path: "/insurance", color: "gradient-accent" },
+              { icon: Gift, label: "Rewards", path: "/rewards", color: "gradient-primary" },
+              { icon: LayoutGrid, label: "All Services", path: "/services", color: "gradient-hero" },
+            ].map((s) => (
+              <button key={s.path} onClick={() => navigate(s.path)} className="flex flex-col items-center gap-1.5 shrink-0">
+                <div className={`w-14 h-14 rounded-2xl ${s.color} flex items-center justify-center shadow-card`}>
+                  <s.icon className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <span className="text-[10px] font-medium text-foreground whitespace-nowrap">{s.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 

@@ -1,12 +1,12 @@
 import { ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, TrendingUp, PiggyBank, CreditCard, BarChart3 } from "lucide-react";
+import { Home, TrendingUp, PiggyBank, LayoutGrid, BarChart3 } from "lucide-react";
 
 const navItems = [
   { path: "/dashboard", icon: Home, label: "Home" },
   { path: "/income", icon: TrendingUp, label: "Income" },
+  { path: "/services", icon: LayoutGrid, label: "Services" },
   { path: "/savings", icon: PiggyBank, label: "Savings" },
-  { path: "/loans", icon: CreditCard, label: "Loans" },
   { path: "/analytics", icon: BarChart3, label: "Insights" },
 ];
 

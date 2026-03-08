@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { store } from "@/lib/store";
+import { featureStore } from "@/lib/store-features";
 import logo from "@/assets/rozanapay-logo.png";
 
 export default function Welcome() {
@@ -23,6 +24,7 @@ export default function Welcome() {
     };
     store.setUser(demoUser);
     store.seedDemoData();
+    featureStore.seedFeatureData();
     store.setOnboarded(true);
     navigate("/dashboard");
   };
