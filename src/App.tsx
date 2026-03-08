@@ -26,6 +26,8 @@ import ChatBotPage from "./pages/ChatBot";
 import GroupSavingsPage from "./pages/GroupSavings";
 import CreditExport from "./pages/CreditExport";
 import SmartNudges from "./pages/SmartNudges";
+import Expenses from "./pages/Expenses";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +53,8 @@ const App = () => (
           <Route path="/loans" element={<ProtectedRoute><Loans /></ProtectedRoute>} />
           <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
           <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+          <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
           <Route path="/upi-qr" element={<ProtectedRoute><UpiQr /></ProtectedRoute>} />
           <Route path="/bnpl" element={<ProtectedRoute><Bnpl /></ProtectedRoute>} />
