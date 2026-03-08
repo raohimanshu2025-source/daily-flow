@@ -1,24 +1,35 @@
 import { useNavigate } from "react-router-dom";
 import { store } from "@/lib/store";
 import MobileLayout from "@/components/MobileLayout";
-import { Plus, PiggyBank, Send, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid } from "lucide-react";
+import { Plus, PiggyBank, Send, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid, Sun, Moon, Languages, Minus } from "lucide-react";
 import { featureStore } from "@/lib/store-features";
+import { notificationStore } from "@/lib/notifications";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/hooks/use-language";
+import { useTheme } from "@/hooks/use-theme";
+import { expenseStore } from "@/lib/store-expenses";
 import logo from "@/assets/rozanapay-logo.png";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { lang, toggle: toggleLang } = useLanguage();
+  const { theme, toggle: toggleTheme } = useTheme();
   const user = store.getUser();
   const balance = store.getBalance();
   const todayIncome = store.getTodayIncome();
   const totalSavings = store.getTotalSavings();
   const activeLoans = store.getActiveLoans();
   const transactions = store.getTransactions().slice(0, 5);
+  const unreadNotifs = notificationStore.getUnreadCount();
+
+  // Generate notifications on dashboard load
+  notificationStore.generateSmartNotifications();
 
   const quickActions = [
-    { icon: Plus, label: "Add Income", color: "gradient-primary", path: "/income" },
-    { icon: PiggyBank, label: "Save Money", color: "gradient-accent", path: "/savings" },
-    { icon: Send, label: "Send Money", color: "gradient-warm", path: "/transactions" },
-    { icon: CreditCard, label: "Get Loan", color: "gradient-primary", path: "/loans" },
+    { icon: Plus, label: t('dash.addIncome'), color: "gradient-primary", path: "/income" },
+    { icon: PiggyBank, label: t('dash.saveMoney'), color: "gradient-accent", path: "/savings" },
+    { icon: Minus, label: t('expense.addExpense'), color: "gradient-warm", path: "/expenses" },
+    { icon: CreditCard, label: t('dash.getLoan'), color: "gradient-primary", path: "/loans" },
   ];
 
   return (
@@ -33,22 +44,34 @@ export default function Dashboard() {
               </span>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Good morning</p>
+              <p className="text-xs text-muted-foreground">{t('dash.greeting')}</p>
               <p className="font-semibold text-foreground">{user?.name || "User"}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="RozanaPay" className="h-6 w-6" />
-            <button className="w-10 h-10 rounded-full bg-muted flex items-center justify-center relative">
-              <Bell className="h-5 w-5 text-muted-foreground" />
-              <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-destructive" />
+          <div className="flex items-center gap-1.5">
+            <button onClick={toggleLang}
+              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center" title="Switch Language">
+              <span className="text-xs font-bold text-foreground">{lang === 'en' ? 'हि' : 'En'}</span>
+            </button>
+            <button onClick={toggleTheme}
+              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center" title="Toggle Theme">
+              {theme === 'light' ? <Moon className="h-4 w-4 text-muted-foreground" /> : <Sun className="h-4 w-4 text-warning" />}
+            </button>
+            <button onClick={() => navigate('/notifications')}
+              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center relative">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              {unreadNotifs > 0 && (
+                <div className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive flex items-center justify-center">
+                  <span className="text-[9px] font-bold text-destructive-foreground">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>
+                </div>
+              )}
             </button>
           </div>
         </div>
 
         {/* Balance Card */}
         <div className="gradient-hero rounded-2xl p-5 mb-6 shadow-elevated animate-fade-in">
-          <p className="text-primary-foreground/70 text-sm mb-1">Available Balance</p>
+          <p className="text-primary-foreground/70 text-sm mb-1">{t('dash.balance')}</p>
           <h2 className="text-3xl font-bold text-primary-foreground mb-4">
             ₹{balance.toLocaleString("en-IN")}
           </h2>
@@ -56,14 +79,14 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <ArrowDownLeft className="h-4 w-4 text-primary-foreground/70" />
               <div>
-                <p className="text-[10px] text-primary-foreground/60">Today's Income</p>
+                <p className="text-[10px] text-primary-foreground/60">{t('dash.todayIncome')}</p>
                 <p className="text-sm font-semibold text-primary-foreground">₹{todayIncome.toLocaleString("en-IN")}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <ArrowUpRight className="h-4 w-4 text-primary-foreground/70" />
               <div>
-                <p className="text-[10px] text-primary-foreground/60">Total Savings</p>
+                <p className="text-[10px] text-primary-foreground/60">{t('dash.totalSavings')}</p>
                 <p className="text-sm font-semibold text-primary-foreground">₹{totalSavings.toLocaleString("en-IN")}</p>
               </div>
             </div>
@@ -91,20 +114,18 @@ export default function Dashboard() {
           <div className="bg-card rounded-xl p-4 shadow-card">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-4 w-4 text-success" />
-              <span className="text-xs text-muted-foreground">Credit Score</span>
+              <span className="text-xs text-muted-foreground">{t('dash.creditScore')}</span>
             </div>
             <p className="text-xl font-bold text-foreground">{user?.creditScore || 300}</p>
             <div className="w-full h-1.5 rounded-full bg-muted mt-2">
-              <div
-                className="h-full rounded-full gradient-accent transition-all"
-                style={{ width: `${((user?.creditScore || 300) / 900) * 100}%` }}
-              />
+              <div className="h-full rounded-full gradient-accent transition-all"
+                style={{ width: `${((user?.creditScore || 300) / 900) * 100}%` }} />
             </div>
           </div>
           <div className="bg-card rounded-xl p-4 shadow-card">
             <div className="flex items-center gap-2 mb-2">
               <CreditCard className="h-4 w-4 text-primary" />
-              <span className="text-xs text-muted-foreground">Active Loans</span>
+              <span className="text-xs text-muted-foreground">{t('dash.activeLoans')}</span>
             </div>
             <p className="text-xl font-bold text-foreground">{activeLoans.length}</p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -116,15 +137,15 @@ export default function Dashboard() {
         {/* Featured Services */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-foreground">Explore Services</h3>
-            <button onClick={() => navigate("/services")} className="text-sm text-primary font-medium">See All</button>
+            <h3 className="font-semibold text-foreground">{t('dash.exploreServices')}</h3>
+            <button onClick={() => navigate("/services")} className="text-sm text-primary font-medium">{t('common.seeAll')}</button>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
             {[
               { icon: Coins, label: "Digital Gold", path: "/gold", color: "gradient-warm" },
               { icon: Shield, label: "Insurance", path: "/insurance", color: "gradient-accent" },
               { icon: Gift, label: "Rewards", path: "/rewards", color: "gradient-primary" },
-              { icon: LayoutGrid, label: "All Services", path: "/services", color: "gradient-hero" },
+              { icon: LayoutGrid, label: t('nav.services'), path: "/services", color: "gradient-hero" },
             ].map((s) => (
               <button key={s.path} onClick={() => navigate(s.path)} className="flex flex-col items-center gap-1.5 shrink-0">
                 <div className={`w-14 h-14 rounded-2xl ${s.color} flex items-center justify-center shadow-card`}>
@@ -139,14 +160,12 @@ export default function Dashboard() {
         {/* Recent Transactions */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-foreground">Recent Activity</h3>
-            <button onClick={() => navigate("/transactions")} className="text-sm text-primary font-medium">
-              See All
-            </button>
+            <h3 className="font-semibold text-foreground">{t('dash.recentActivity')}</h3>
+            <button onClick={() => navigate("/transactions")} className="text-sm text-primary font-medium">{t('common.seeAll')}</button>
           </div>
           <div className="space-y-2">
             {transactions.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8 text-sm">No transactions yet</p>
+              <p className="text-center text-muted-foreground py-8 text-sm">{t('common.noData')}</p>
             ) : (
               transactions.map((txn) => (
                 <div key={txn.id} className="flex items-center gap-3 bg-card rounded-xl p-3 shadow-card">
