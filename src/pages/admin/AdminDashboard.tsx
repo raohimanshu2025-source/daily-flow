@@ -1,27 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, CreditCard, BarChart3, Shield, ArrowLeft, TrendingUp, AlertTriangle } from "lucide-react";
-
-// Mock admin data
-const mockUsers = [
-  { id: "1", name: "Ramesh Kumar", phone: "9876543210", occupation: "Auto Driver", city: "Delhi", creditScore: 450, status: "active" },
-  { id: "2", name: "Priya Devi", phone: "9876543211", occupation: "Street Vendor", city: "Mumbai", creditScore: 380, status: "active" },
-  { id: "3", name: "Suresh Singh", phone: "9876543212", occupation: "Delivery Partner", city: "Bangalore", creditScore: 520, status: "active" },
-  { id: "4", name: "Anita Kumari", phone: "9876543213", occupation: "Shop Worker", city: "Chennai", creditScore: 290, status: "flagged" },
-  { id: "5", name: "Mohan Lal", phone: "9876543214", occupation: "Construction Worker", city: "Jaipur", creditScore: 410, status: "active" },
-];
-
-const mockPendingLoans = [
-  { id: "L1", userName: "Ramesh Kumar", amount: 5000, duration: 14, creditScore: 450, appliedAt: "2026-03-07" },
-  { id: "L2", userName: "Priya Devi", amount: 2000, duration: 7, creditScore: 380, appliedAt: "2026-03-08" },
-  { id: "L3", userName: "Suresh Singh", amount: 10000, duration: 30, creditScore: 520, appliedAt: "2026-03-08" },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { motion } from "framer-motion";
+import { Users, CreditCard, BarChart3, Shield, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, XCircle, Search } from "lucide-react";
+import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 type Tab = "overview" | "users" | "loans" | "risk";
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("overview");
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) return;
+    // Check admin role via has_role function
+    supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' } as any).then(({ data }) => {
+      setIsAdmin(!!data);
+    });
+  }, [user]);
+
+  if (isAdmin === null) {
+    return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-primary font-bold">Checking access...</div></div>;
+  }
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-6">
+        <div className="text-center">
+          <p className="text-5xl mb-4">🔒</p>
+          <h2 className="text-xl font-black text-foreground mb-2">Admin Access Required</h2>
+          <p className="text-sm text-muted-foreground mb-4">You don't have permission to access this page.</p>
+          <button onClick={() => navigate("/dashboard")} className="text-primary font-bold text-sm">← Back to Dashboard</button>
+        </div>
+      </div>
+    );
+  }
 
   const tabs = [
     { id: "overview" as Tab, icon: BarChart3, label: "Overview" },
@@ -32,26 +47,20 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="gradient-hero px-6 pt-6 pb-4">
+      <div className="gradient-hero animated-gradient px-6 pt-6 pb-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
-            <button onClick={() => navigate("/dashboard")} className="text-primary-foreground/80">
-              <ArrowLeft className="h-5 w-5" />
+            <button onClick={() => navigate("/dashboard")} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+              <ArrowLeft className="h-5 w-5 text-white" />
             </button>
-            <h1 className="text-xl font-bold text-primary-foreground">Admin Dashboard</h1>
+            <h1 className="text-xl font-black text-white">Admin Dashboard 🛡️</h1>
           </div>
           <div className="flex gap-2">
             {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  tab === t.id
-                    ? "bg-primary-foreground/20 text-primary-foreground"
-                    : "text-primary-foreground/60 hover:text-primary-foreground/80"
-                }`}
-              >
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                  tab === t.id ? "bg-white/20 text-white backdrop-blur-sm" : "text-white/60 hover:text-white/80"
+                }`}>
                 <t.icon className="h-4 w-4" /> {t.label}
               </button>
             ))}
@@ -70,115 +79,346 @@ export default function AdminDashboard() {
 }
 
 function OverviewTab() {
-  const stats = [
-    { label: "Total Users", value: "12,847", change: "+342 this week", icon: Users, color: "text-primary" },
-    { label: "Active Loans", value: "₹84.5L", change: "2,341 loans", icon: CreditCard, color: "text-warning" },
-    { label: "Total Savings", value: "₹1.2Cr", change: "+₹8.5L this month", icon: TrendingUp, color: "text-success" },
-    { label: "Default Rate", value: "2.1%", change: "↓ 0.3% from last month", icon: Shield, color: "text-destructive" },
+  const [stats, setStats] = useState({ users: 0, totalLoans: 0, totalSavings: 0, totalIncome: 0 });
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    const [profiles, loans, savings, income] = await Promise.all([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('loans').select('amount, status'),
+      supabase.from('savings_goals').select('current_amount'),
+      supabase.from('income_logs').select('amount, date'),
+    ]);
+
+    setStats({
+      users: profiles.count || 0,
+      totalLoans: (loans.data || []).reduce((s, l) => s + l.amount, 0),
+      totalSavings: (savings.data || []).reduce((s, g) => s + g.current_amount, 0),
+      totalIncome: (income.data || []).reduce((s, i) => s + i.amount, 0),
+    });
+
+    // Build monthly chart data from income
+    const months: Record<string, number> = {};
+    (income.data || []).forEach(i => {
+      const month = new Date(i.date).toLocaleDateString('en-IN', { month: 'short' });
+      months[month] = (months[month] || 0) + i.amount;
+    });
+    setMonthlyData(Object.entries(months).map(([month, amount]) => ({ month, amount })));
+  };
+
+  const loanStatusData = [
+    { name: 'Active', value: 45, color: 'hsl(262, 83%, 58%)' },
+    { name: 'Pending', value: 20, color: 'hsl(38, 92%, 50%)' },
+    { name: 'Repaid', value: 30, color: 'hsl(152, 69%, 45%)' },
+    { name: 'Overdue', value: 5, color: 'hsl(0, 84%, 60%)' },
+  ];
+
+  const statCards = [
+    { label: "Total Users", value: stats.users.toLocaleString(), icon: Users, bg: "gradient-primary", emoji: "👥" },
+    { label: "Loans Disbursed", value: `₹${(stats.totalLoans / 100000).toFixed(1)}L`, icon: CreditCard, bg: "gradient-warm", emoji: "💳" },
+    { label: "Total Savings", value: `₹${(stats.totalSavings / 100000).toFixed(1)}L`, icon: TrendingUp, bg: "gradient-success", emoji: "💰" },
+    { label: "Total Income", value: `₹${(stats.totalIncome / 100000).toFixed(1)}L`, icon: BarChart3, bg: "gradient-cool", emoji: "📈" },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((s) => (
-        <div key={s.label} className="bg-card rounded-xl p-5 shadow-card">
-          <div className="flex items-center gap-2 mb-3">
-            <s.icon className={`h-5 w-5 ${s.color}`} />
-            <span className="text-sm text-muted-foreground">{s.label}</span>
-          </div>
-          <p className="text-2xl font-bold text-foreground">{s.value}</p>
-          <p className="text-xs text-muted-foreground mt-1">{s.change}</p>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((s) => (
+          <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            className="bg-card rounded-2xl p-5 shadow-card border border-border/50 relative overflow-hidden">
+            <div className="absolute -top-2 -right-2 text-3xl opacity-10">{s.emoji}</div>
+            <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>
+              <s.icon className="h-5 w-5 text-white" />
+            </div>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{s.label}</p>
+            <p className="text-2xl font-black text-foreground mt-1">{s.value}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card rounded-2xl p-5 shadow-card border border-border/50">
+          <h3 className="font-black text-foreground mb-4">Income Trend 📊</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={monthlyData.length > 0 ? monthlyData : [{ month: 'No data', amount: 0 }]}>
+              <defs>
+                <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(250, 20%, 92%)" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Area type="monotone" dataKey="amount" stroke="hsl(262, 83%, 58%)" fill="url(#incomeGrad)" strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
-      ))}
+
+        <div className="bg-card rounded-2xl p-5 shadow-card border border-border/50">
+          <h3 className="font-black text-foreground mb-4">Loan Distribution 🏦</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie data={loanStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value">
+                {loanStatusData.map((entry, i) => (
+                  <Cell key={i} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
 
 function UsersTab() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    setUsers(data || []);
+    setLoading(false);
+  };
+
+  const filtered = users.filter(u =>
+    u.name?.toLowerCase().includes(search.toLowerCase()) ||
+    u.city?.toLowerCase().includes(search.toLowerCase()) ||
+    u.occupation?.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className="bg-card rounded-xl shadow-card overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="text-left px-4 py-3 text-sm font-semibold text-foreground">Name</th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-foreground">Phone</th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-foreground">Occupation</th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-foreground">City</th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-foreground">Credit Score</th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-foreground">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockUsers.map((u) => (
-              <tr key={u.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-3 text-sm font-medium text-foreground">{u.name}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">{u.phone}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">{u.occupation}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">{u.city}</td>
-                <td className="px-4 py-3 text-sm font-medium text-foreground">{u.creditScore}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-1 rounded-md font-semibold ${
-                    u.status === "active" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-                  }`}>{u.status}</span>
-                </td>
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..."
+            className="w-full pl-11 pr-4 py-3 rounded-xl bg-muted text-foreground font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+        </div>
+        <span className="text-sm text-muted-foreground font-bold">{filtered.length} users</span>
+      </div>
+
+      <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Name</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Occupation</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">City</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Credit</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">KYC</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">Loading...</td></tr>
+              ) : filtered.map((u) => (
+                <tr key={u.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+                        <span className="text-[10px] font-bold text-white">{u.name?.charAt(0) || '?'}</span>
+                      </div>
+                      <span className="text-sm font-bold text-foreground">{u.name || 'Unnamed'}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{u.occupation || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{u.city || '-'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-sm font-bold ${(u.credit_score || 300) >= 500 ? 'text-success' : 'text-destructive'}`}>
+                      {u.credit_score || 300}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-lg font-bold ${
+                      u.kyc_status === 'verified' ? 'bg-success/10 text-success' :
+                      u.kyc_status === 'submitted' ? 'bg-warning/10 text-warning' :
+                      'bg-muted text-muted-foreground'
+                    }`}>{u.kyc_status || 'pending'}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 }
 
 function LoansTab() {
+  const [loans, setLoans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadLoans();
+  }, []);
+
+  const loadLoans = async () => {
+    const { data } = await supabase.from('loans').select('*').order('applied_at', { ascending: false });
+    setLoans(data || []);
+    setLoading(false);
+  };
+
+  const handleAction = async (loanId: string, action: 'approved' | 'rejected') => {
+    const updates: any = { status: action };
+    if (action === 'approved') {
+      updates.approved_at = new Date().toISOString();
+      const loan = loans.find(l => l.id === loanId);
+      if (loan) {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + loan.duration);
+        updates.due_date = dueDate.toISOString();
+      }
+    }
+    await supabase.from('loans').update(updates).eq('id', loanId);
+    loadLoans();
+  };
+
+  const pendingLoans = loans.filter(l => l.status === 'pending');
+  const otherLoans = loans.filter(l => l.status !== 'pending');
+
   return (
-    <div>
-      <h3 className="font-semibold text-foreground mb-4">Pending Loan Approvals</h3>
-      <div className="space-y-3">
-        {mockPendingLoans.map((loan) => (
-          <div key={loan.id} className="bg-card rounded-xl p-4 shadow-card flex items-center gap-4">
-            <div className="flex-1">
-              <p className="font-medium text-foreground">{loan.userName}</p>
-              <p className="text-sm text-muted-foreground">₹{loan.amount.toLocaleString("en-IN")} · {loan.duration} days · Score: {loan.creditScore}</p>
-            </div>
-            <div className="flex gap-2">
-              <button className="px-4 py-2 rounded-lg gradient-accent text-accent-foreground text-sm font-semibold">Approve</button>
-              <button className="px-4 py-2 rounded-lg bg-destructive/10 text-destructive text-sm font-semibold">Reject</button>
-            </div>
+    <div className="space-y-6">
+      <div>
+        <h3 className="font-black text-foreground mb-4">Pending Approvals ({pendingLoans.length}) ⏳</h3>
+        {loading ? <p className="text-muted-foreground">Loading...</p> :
+        pendingLoans.length === 0 ? (
+          <div className="bg-card rounded-2xl p-6 text-center shadow-card border border-border/50">
+            <p className="text-3xl mb-2">✅</p>
+            <p className="text-muted-foreground text-sm">No pending loan applications</p>
           </div>
-        ))}
+        ) : (
+          <div className="space-y-3">
+            {pendingLoans.map((loan) => (
+              <motion.div key={loan.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                className="bg-card rounded-2xl p-4 shadow-card border border-border/50 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex-1">
+                  <p className="font-bold text-foreground">₹{loan.amount.toLocaleString("en-IN")}</p>
+                  <p className="text-xs text-muted-foreground">{loan.duration} days · {loan.interest_rate}% interest · Applied {new Date(loan.applied_at).toLocaleDateString("en-IN")}</p>
+                </div>
+                <div className="flex gap-2">
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(loan.id, 'approved')}
+                    className="px-4 py-2 rounded-xl gradient-success text-white text-sm font-bold flex items-center gap-1 shadow-glow-success">
+                    <CheckCircle className="h-4 w-4" /> Approve
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(loan.id, 'rejected')}
+                    className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive text-sm font-bold flex items-center gap-1">
+                    <XCircle className="h-4 w-4" /> Reject
+                  </motion.button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-black text-foreground mb-4">All Loans ({otherLoans.length})</h3>
+        <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Amount</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Duration</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Repaid</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {otherLoans.map(loan => (
+                  <tr key={loan.id} className="border-b border-border/50 last:border-0">
+                    <td className="px-4 py-3 text-sm font-bold text-foreground">₹{loan.amount.toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{loan.duration}d</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">₹{loan.repaid_amount.toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-1 rounded-lg font-bold ${
+                        loan.status === 'approved' || loan.status === 'active' ? 'bg-success/10 text-success' :
+                        loan.status === 'rejected' ? 'bg-destructive/10 text-destructive' :
+                        loan.status === 'repaid' ? 'bg-primary/10 text-primary' :
+                        'bg-muted text-muted-foreground'
+                      }`}>{loan.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 function RiskTab() {
-  const flags = [
-    { user: "Anita Kumari", reason: "Multiple loan applications in 24hrs", severity: "high" },
-    { user: "Unknown User", reason: "Suspicious OTP attempts", severity: "medium" },
-    { user: "Mohan Lal", reason: "Income inconsistency detected", severity: "low" },
+  const [loans, setLoans] = useState<any[]>([]);
+
+  useEffect(() => {
+    supabase.from('loans').select('*').then(({ data }) => {
+      setLoans(data || []);
+    });
+  }, []);
+
+  const overdue = loans.filter(l => l.due_date && new Date(l.due_date) < new Date() && l.status !== 'repaid');
+  const highRisk = loans.filter(l => l.amount > 10000 && l.repaid_amount < l.amount * 0.2);
+  const defaultRate = loans.length > 0 ? ((overdue.length / loans.length) * 100).toFixed(1) : '0';
+
+  const riskData = [
+    { category: 'Low Risk', count: loans.filter(l => l.amount <= 5000).length },
+    { category: 'Medium', count: loans.filter(l => l.amount > 5000 && l.amount <= 15000).length },
+    { category: 'High Risk', count: loans.filter(l => l.amount > 15000).length },
   ];
 
   return (
-    <div>
-      <h3 className="font-semibold text-foreground mb-4">Risk & Fraud Alerts</h3>
-      <div className="space-y-3">
-        {flags.map((flag, i) => (
-          <div key={i} className="bg-card rounded-xl p-4 shadow-card flex items-center gap-3">
-            <AlertTriangle className={`h-5 w-5 ${
-              flag.severity === "high" ? "text-destructive" :
-              flag.severity === "medium" ? "text-warning" : "text-muted-foreground"
-            }`} />
-            <div className="flex-1">
-              <p className="font-medium text-foreground">{flag.user}</p>
-              <p className="text-sm text-muted-foreground">{flag.reason}</p>
-            </div>
-            <span className={`text-xs px-2 py-1 rounded-md font-semibold ${
-              flag.severity === "high" ? "bg-destructive/10 text-destructive" :
-              flag.severity === "medium" ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground"
-            }`}>{flag.severity}</span>
-          </div>
-        ))}
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-card rounded-2xl p-5 shadow-card border border-destructive/20">
+          <AlertTriangle className="h-6 w-6 text-destructive mb-2" />
+          <p className="text-xs text-muted-foreground font-bold uppercase">Default Rate</p>
+          <p className="text-3xl font-black text-destructive">{defaultRate}%</p>
+        </div>
+        <div className="bg-card rounded-2xl p-5 shadow-card border border-warning/20">
+          <AlertTriangle className="h-6 w-6 text-warning mb-2" />
+          <p className="text-xs text-muted-foreground font-bold uppercase">Overdue Loans</p>
+          <p className="text-3xl font-black text-warning">{overdue.length}</p>
+        </div>
+        <div className="bg-card rounded-2xl p-5 shadow-card border border-border/50">
+          <Shield className="h-6 w-6 text-primary mb-2" />
+          <p className="text-xs text-muted-foreground font-bold uppercase">High Risk</p>
+          <p className="text-3xl font-black text-foreground">{highRisk.length}</p>
+        </div>
+      </div>
+
+      <div className="bg-card rounded-2xl p-5 shadow-card border border-border/50">
+        <h3 className="font-black text-foreground mb-4">Risk Distribution 📊</h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={riskData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(250, 20%, 92%)" />
+            <XAxis dataKey="category" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip />
+            <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+              <Cell fill="hsl(152, 69%, 45%)" />
+              <Cell fill="hsl(38, 92%, 50%)" />
+              <Cell fill="hsl(0, 84%, 60%)" />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
