@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import MobileLayout from "@/components/MobileLayout";
-import { QrCode, ShoppingBag, Coins, Shield, Gift, Smartphone, MessageCircle, Users, Award, Brain } from "lucide-react";
+import { QrCode, ShoppingBag, Coins, Shield, Gift, Smartphone, MessageCircle, Users, Award, Brain, Receipt } from "lucide-react";
 
 const services = [
   { icon: QrCode, label: "UPI QR Pay", desc: "Receive payments via QR", path: "/upi-qr", color: "bg-primary/10 text-primary" },
@@ -13,6 +13,7 @@ const services = [
   { icon: Users, label: "Group Savings", desc: "Digital chit fund", path: "/group-savings", color: "bg-warning/10 text-warning" },
   { icon: Award, label: "Credit Score", desc: "Export financial identity", path: "/credit-export", color: "bg-success/10 text-success" },
   { icon: Brain, label: "Smart Nudges", desc: "AI spending insights", path: "/smart-nudges", color: "bg-primary/10 text-primary" },
+  { icon: Receipt, label: "Expense Tracker", desc: "Track daily spending", path: "/expenses", color: "bg-destructive/10 text-destructive" },
 ];
 
 export default function Services() {
