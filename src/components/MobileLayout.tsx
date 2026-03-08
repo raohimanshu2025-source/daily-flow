@@ -6,11 +6,11 @@ import { t } from "@/lib/i18n";
 import { useLanguage } from "@/hooks/use-language";
 
 const navItems = [
-  { path: "/dashboard", icon: Home, labelKey: "nav.home" },
-  { path: "/income", icon: TrendingUp, labelKey: "nav.income" },
-  { path: "/services", icon: LayoutGrid, labelKey: "nav.services" },
-  { path: "/savings", icon: PiggyBank, labelKey: "nav.savings" },
-  { path: "/analytics", icon: BarChart3, labelKey: "nav.insights" },
+  { path: "/dashboard", icon: Home, labelKey: "nav.home", emoji: "🏠" },
+  { path: "/income", icon: TrendingUp, labelKey: "nav.income", emoji: "💰" },
+  { path: "/services", icon: LayoutGrid, labelKey: "nav.services", emoji: "📱" },
+  { path: "/savings", icon: PiggyBank, labelKey: "nav.savings", emoji: "🐷" },
+  { path: "/analytics", icon: BarChart3, labelKey: "nav.insights", emoji: "📊" },
 ];
 
 export default function MobileLayout({ children }: { children: ReactNode }) {
@@ -29,30 +29,33 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
         {children}
       </motion.div>
 
-      {/* Bottom Navigation - Floating Style */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 pb-2 z-50 safe-bottom">
-        <nav className="max-w-md mx-auto bg-card/95 backdrop-blur-xl rounded-2xl shadow-elevated border border-border/50 px-2 py-1.5">
+      {/* Bottom Navigation - Bold Floating Style */}
+      <div className="fixed bottom-0 left-0 right-0 px-3 pb-2 z-50 safe-bottom">
+        <nav className="max-w-md mx-auto bg-card/98 backdrop-blur-2xl rounded-2xl shadow-elevated border border-border/40 px-1 py-1">
           <div className="flex items-center justify-around">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
-                <button
+                <motion.button
                   key={item.path}
                   onClick={() => navigate(item.path)}
                   className="relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all"
+                  whileTap={{ scale: 0.85 }}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="nav-active"
-                      className="absolute inset-0 gradient-primary rounded-xl opacity-10"
+                      className="absolute inset-0 gradient-primary rounded-xl"
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
-                  <item.icon className={`h-5 w-5 transition-colors ${isActive ? "text-primary stroke-[2.5]" : "text-muted-foreground"}`} />
-                  <span className={`text-[10px] transition-colors ${isActive ? "font-bold text-primary" : "font-medium text-muted-foreground"}`}>
+                  <div className="relative z-10">
+                    <item.icon className={`h-5 w-5 transition-colors ${isActive ? "text-primary-foreground stroke-[2.5]" : "text-muted-foreground"}`} />
+                  </div>
+                  <span className={`text-[9px] relative z-10 transition-colors ${isActive ? "font-black text-primary-foreground" : "font-semibold text-muted-foreground"}`}>
                     {t(item.labelKey)}
                   </span>
-                </button>
+                </motion.button>
               );
             })}
           </div>
