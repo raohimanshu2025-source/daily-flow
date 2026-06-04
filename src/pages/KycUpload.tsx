@@ -45,12 +45,7 @@ export default function KycUpload() {
       return;
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('kyc-documents')
-      .getPublicUrl(filePath);
-
-    // Update profile
+    // Update profile — store only the storage path; we use signed URLs to read it
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ kyc_doc_url: filePath, kyc_status: 'submitted' })
