@@ -20,7 +20,24 @@ export default function PhoneLogin() {
   const handlePhoneLogin = async () => {
     if (phone.length !== 10) return;
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({ phone: `+91${phone}` });
+    const fullPhone = `+91${phone}`;
+
+    // Phase 1: server-side OTP rate limit (5 / 15 min)
+    const { data: allowed, error: rlErr } = await supabase.rpc('check_otp_rate_limit', { _phone: fullPhone });
+    if (rlErr) {
+      setLoading(false);
+      toast.error("Could not verify rate limit. Try again.");
+      return;
+    }
+    if (allowed === false) {
+      setLoading(false);
+      toast.error("Too many OTP requests. Please wait 15 minutes.");
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({ phone: fullPhone });
+    // Record this attempt regardless of success to throttle abuse
+    await supabase.rpc('record_otp_attempt', { _phone: fullPhone });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     toast.success("OTP sent!");
