@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/use-cloud-data";
@@ -14,7 +14,19 @@ export default function KycUpload() {
   const { data: profile, refetch } = useProfile();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Phase 1: fetch a signed URL for previously uploaded KYC doc (private bucket)
+  useEffect(() => {
+    const path = (profile as any)?.kyc_doc_url;
+    if (!path) { setSignedUrl(null); return; }
+    let cancelled = false;
+    supabase.storage.from('kyc-documents').createSignedUrl(path, 3600).then(({ data }) => {
+      if (!cancelled) setSignedUrl(data?.signedUrl ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [(profile as any)?.kyc_doc_url]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,6 +70,13 @@ export default function KycUpload() {
     }
 
     toast.success("KYC document uploaded! 📄");
+    // Phase 1: audit log
+    await supabase.rpc('log_audit_event', {
+      _action: 'kyc.submitted',
+      _entity_type: 'profile',
+      _entity_id: user.id,
+      _metadata: { path: filePath, size: file.size, mime: file.type },
+    });
     refetch();
 
     // Show preview for images
@@ -157,6 +176,15 @@ export default function KycUpload() {
           transition={{ delay: 0.2 }}
           className="mt-6 bg-card rounded-2xl p-4 shadow-card border border-border/50"
         >
+          {signedUrl && (
+            <div className="mb-4">
+              <h3 className="text-sm font-bold text-foreground mb-2">Your uploaded document</h3>
+              <a href={signedUrl} target="_blank" rel="noopener noreferrer"
+                 className="block text-xs text-primary font-semibold underline break-all">
+                View securely (link expires in 1 hour)
+              </a>
+            </div>
+          )}
           <h3 className="text-sm font-bold text-foreground mb-3">Accepted Documents</h3>
           <div className="space-y-2">
             {[

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLoans, useAddLoan, useProfile } from "@/hooks/use-cloud-data";
+import { supabase } from "@/integrations/supabase/client";
 import MobileLayout from "@/components/MobileLayout";
 import { CreditCard, X, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -27,6 +28,19 @@ export default function Loans() {
     if (!agreedTerms) { toast.error("Please accept the loan terms"); return; }
     try {
       await addLoan.mutateAsync({ amount: selectedAmount, duration: selectedDuration, interest_rate: interestRate });
+      // Phase 1: audit log for compliance
+      await supabase.rpc('log_audit_event', {
+        _action: 'loan.applied',
+        _entity_type: 'loan',
+        _entity_id: null,
+        _metadata: {
+          amount: selectedAmount,
+          duration_days: selectedDuration,
+          interest_rate: interestRate,
+          apr_pct: Number(apr),
+          consent: true,
+        },
+      });
       setShowApply(false);
       setAgreedTerms(false);
       toast.success("Loan applied!");
