@@ -11,6 +11,7 @@ export default function Loans() {
   const [showApply, setShowApply] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(2000);
   const [selectedDuration, setSelectedDuration] = useState(14);
+  const [agreedTerms, setAgreedTerms] = useState(false);
 
   const { data: loans = [] } = useLoans();
   const { data: profile } = useProfile();
@@ -18,11 +19,16 @@ export default function Loans() {
   const activeLoans = loans.filter(l => ['approved', 'active', 'pending'].includes(l.status || ''));
   const interestRate = 2;
   const totalRepay = selectedAmount + (selectedAmount * interestRate * selectedDuration) / (100 * 30);
+  const interestAmount = Math.round(totalRepay - selectedAmount);
+  const apr = (interestRate * 12).toFixed(2); // monthly rate × 12 months
+  const processingFee = Math.round(selectedAmount * 0.01); // 1% sample
 
   const handleApply = async () => {
+    if (!agreedTerms) { toast.error("Please accept the loan terms"); return; }
     try {
       await addLoan.mutateAsync({ amount: selectedAmount, duration: selectedDuration, interest_rate: interestRate });
       setShowApply(false);
+      setAgreedTerms(false);
       toast.success("Loan applied!");
     } catch (err: any) { toast.error(err.message); }
   };
@@ -126,14 +132,34 @@ export default function Loans() {
                 </div>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-muted-foreground">Interest ({interestRate}%/month)</span>
-                  <span className="font-medium text-foreground">₹{Math.round(totalRepay - selectedAmount)}</span>
+                  <span className="font-medium text-foreground">₹{interestAmount}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Processing Fee (1%)</span>
+                  <span className="font-medium text-foreground">₹{processingFee}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Representative APR</span>
+                  <span className="font-medium text-foreground">{apr}%</span>
                 </div>
                 <div className="border-t border-border pt-2 mt-2 flex justify-between text-sm">
                   <span className="font-semibold text-foreground">Total Repayment</span>
-                  <span className="font-bold text-foreground">₹{Math.round(totalRepay).toLocaleString("en-IN")}</span>
+                  <span className="font-bold text-foreground">₹{(Math.round(totalRepay) + processingFee).toLocaleString("en-IN")}</span>
                 </div>
               </div>
-              <button onClick={handleApply} disabled={addLoan.isPending}
+              <div className="bg-warning/10 border border-warning/20 rounded-xl p-3 text-xs text-foreground/80 space-y-1.5">
+                <p className="font-bold text-foreground">Loan Disclosure (RBI / Google Play compliant)</p>
+                <p>• Lender: RozanaPay NBFC Partner (Reg. No: pending)</p>
+                <p>• Min/Max tenure: 7–30 days · Min/Max APR: 24%–36%</p>
+                <p>• Late fee: ₹50/day after due date · No rollover</p>
+                <p>• Repayment auto-debited via UPI mandate on due date</p>
+                <p>• Full schedule, grievance officer & policies available in app settings</p>
+              </div>
+              <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                <input type="checkbox" checked={agreedTerms} onChange={(e) => setAgreedTerms(e.target.checked)} className="mt-0.5 accent-primary w-4 h-4" />
+                <span>I understand the total repayment amount, APR, late fees, and authorize repayment via UPI auto-debit.</span>
+              </label>
+              <button onClick={handleApply} disabled={addLoan.isPending || !agreedTerms}
                 className="w-full py-4 rounded-xl gradient-primary text-primary-foreground font-bold text-lg active:scale-[0.98] transition-all disabled:opacity-40">
                 {addLoan.isPending ? 'Applying...' : 'Apply Now'}
               </button>
