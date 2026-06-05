@@ -290,6 +290,48 @@ export type Database = {
         }
         Relationships: []
       }
+      loan_ledger: {
+        Row: {
+          balance_after_paise: number
+          created_at: string
+          credit_paise: number
+          debit_paise: number
+          description: string
+          entry_type: string
+          id: string
+          loan_id: string
+          posted_at: string
+          reference_id: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_after_paise: number
+          created_at?: string
+          credit_paise?: number
+          debit_paise?: number
+          description?: string
+          entry_type: string
+          id?: string
+          loan_id: string
+          posted_at?: string
+          reference_id?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_after_paise?: number
+          created_at?: string
+          credit_paise?: number
+          debit_paise?: number
+          description?: string
+          entry_type?: string
+          id?: string
+          loan_id?: string
+          posted_at?: string
+          reference_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       loans: {
         Row: {
           amount: number
@@ -550,10 +592,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      loan_balances: {
+        Row: {
+          disbursed_paise: number | null
+          fees_paise: number | null
+          interest_paise: number | null
+          interest_rate: number | null
+          loan_id: string | null
+          outstanding_paise: number | null
+          principal_inr: number | null
+          repaid_paise: number | null
+          status: string | null
+          user_id: string | null
+          written_off_paise: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_otp_rate_limit: { Args: { _phone: string }; Returns: boolean }
+      disburse_loan: { Args: { _loan_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -567,6 +625,16 @@ export type Database = {
           _entity_id?: string
           _entity_type?: string
           _metadata?: Json
+        }
+        Returns: string
+      }
+      post_loan_entry: {
+        Args: {
+          _amount_paise: number
+          _description?: string
+          _entry_type: string
+          _loan_id: string
+          _reference_id?: string
         }
         Returns: string
       }
