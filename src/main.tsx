@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import "./index.css";
+import { initNative } from "./lib/native";
 
 // Register service worker for PWA — guarded against Lovable preview, iframes, dev, and Capacitor
 if ('serviceWorker' in navigator) {
@@ -26,6 +27,9 @@ if ('serviceWorker' in navigator) {
     );
   }
 }
+
+// Initialize Capacitor native features (no-op on web)
+initNative();
 
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
