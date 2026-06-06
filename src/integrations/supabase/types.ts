@@ -122,6 +122,39 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_score_history: {
+        Row: {
+          band: string
+          computed_at: string
+          created_at: string
+          factors: Json
+          id: string
+          model_version: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          band: string
+          computed_at?: string
+          created_at?: string
+          factors?: Json
+          id?: string
+          model_version?: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          band?: string
+          computed_at?: string
+          created_at?: string
+          factors?: Json
+          id?: string
+          model_version?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
@@ -611,6 +644,7 @@ export type Database = {
     }
     Functions: {
       check_otp_rate_limit: { Args: { _phone: string }; Returns: boolean }
+      compute_credit_score: { Args: { _user_id: string }; Returns: number }
       disburse_loan: { Args: { _loan_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -638,6 +672,7 @@ export type Database = {
         }
         Returns: string
       }
+      recompute_all_credit_scores: { Args: never; Returns: number }
       record_otp_attempt: { Args: { _phone: string }; Returns: undefined }
     }
     Enums: {
