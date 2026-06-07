@@ -10,6 +10,97 @@ import { toast } from "sonner";
 const loanAmounts = [500, 1000, 2000, 5000, 10000];
 const loanDurations = [7, 14, 30];
 
+const FACTOR_META: Record<string, { label: string; good: (v: any) => boolean; format: (v: any) => string }> = {
+  income_days_30:    { label: "Income days (30d)",  good: (v) => v >= 15,    format: (v) => `${v} days` },
+  income_total_30:   { label: "Income (30d)",        good: (v) => v >= 10000, format: (v) => `₹${Number(v).toLocaleString("en-IN")}` },
+  savings_balance:   { label: "Savings balance",     good: (v) => v >= 2000,  format: (v) => `₹${Number(v).toLocaleString("en-IN")}` },
+  loans_on_time:     { label: "On-time loans",       good: (v) => v >= 1,     format: (v) => `${v}` },
+  loans_overdue:     { label: "Overdue loans",       good: (v) => v === 0,    format: (v) => `${v}` },
+  outstanding_paise: { label: "Outstanding",         good: (v) => v === 0,    format: (v) => `₹${Math.round(Number(v) / 100).toLocaleString("en-IN")}` },
+  bnpl_active:       { label: "Active BNPL",         good: (v) => v <= 1,     format: (v) => `${v}` },
+  kyc_verified:      { label: "KYC verified",        good: (v) => v === true, format: (v) => v ? "Yes" : "No" },
+  account_age_days:  { label: "Account age",         good: (v) => v >= 30,    format: (v) => `${v} days` },
+};
+
+function CreditScorePanel({ latest, recomputing, onRecompute }: { latest: any; recomputing: boolean; onRecompute: () => void }) {
+  const factors = (latest?.factors || {}) as Record<string, any>;
+  const entries = Object.entries(factors).filter(([k]) => FACTOR_META[k]);
+  const positives = entries.filter(([k, v]) => FACTOR_META[k].good(v)).slice(0, 3);
+  const negatives = entries.filter(([k, v]) => !FACTOR_META[k].good(v)).slice(0, 3);
+  const bandColor: Record<string, string> = {
+    excellent: "bg-success/10 text-success",
+    good: "bg-success/10 text-success",
+    fair: "bg-warning/10 text-warning",
+    poor: "bg-destructive/10 text-destructive",
+    very_poor: "bg-destructive/10 text-destructive",
+  };
+  return (
+    <div className="bg-card rounded-2xl p-4 mb-6 shadow-card">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <p className="text-xs text-muted-foreground">Score breakdown</p>
+          {latest ? (
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-base font-bold text-foreground">{latest.score}</span>
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase ${bandColor[latest.band] || "bg-muted text-muted-foreground"}`}>
+                {String(latest.band).replace("_", " ")}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {new Date(latest.computed_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+              </span>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground mt-0.5">Not computed yet</p>
+          )}
+        </div>
+        <button
+          onClick={onRecompute}
+          disabled={recomputing}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-xs font-semibold text-foreground active:scale-95 transition disabled:opacity-40"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${recomputing ? "animate-spin" : ""}`} />
+          {recomputing ? "Updating..." : "Recompute"}
+        </button>
+      </div>
+
+      {entries.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <div className="flex items-center gap-1 mb-1.5">
+              <TrendingUp className="h-3 w-3 text-success" />
+              <p className="text-[10px] font-semibold uppercase text-muted-foreground">Helping</p>
+            </div>
+            <div className="space-y-1">
+              {positives.length === 0 && <p className="text-xs text-muted-foreground">—</p>}
+              {positives.map(([k, v]) => (
+                <div key={k} className="text-xs">
+                  <span className="text-foreground">{FACTOR_META[k].label}</span>
+                  <span className="text-muted-foreground"> · {FACTOR_META[k].format(v)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-1 mb-1.5">
+              <TrendingDown className="h-3 w-3 text-destructive" />
+              <p className="text-[10px] font-semibold uppercase text-muted-foreground">Hurting</p>
+            </div>
+            <div className="space-y-1">
+              {negatives.length === 0 && <p className="text-xs text-muted-foreground">—</p>}
+              {negatives.map(([k, v]) => (
+                <div key={k} className="text-xs">
+                  <span className="text-foreground">{FACTOR_META[k].label}</span>
+                  <span className="text-muted-foreground"> · {FACTOR_META[k].format(v)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Loans() {
   const [showApply, setShowApply] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(2000);
