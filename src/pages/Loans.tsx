@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useLoans, useAddLoan, useProfile } from "@/hooks/use-cloud-data";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/MobileLayout";
-import { CreditCard, X, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { CreditCard, X, Clock, CheckCircle, AlertCircle, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
 
 const loanAmounts = [500, 1000, 2000, 5000, 10000];
@@ -17,6 +19,44 @@ export default function Loans() {
   const { data: loans = [] } = useLoans();
   const { data: profile } = useProfile();
   const addLoan = useAddLoan();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: latestScore } = useQuery({
+    queryKey: ['credit_score_latest', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('credit_score_history')
+        .select('score, band, factors, computed_at, model_version')
+        .eq('user_id', user!.id)
+        .order('computed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const [recomputing, setRecomputing] = useState(false);
+  const handleRecompute = async () => {
+    if (!user) return;
+    setRecomputing(true);
+    try {
+      const { error } = await supabase.rpc('compute_credit_score', { _user_id: user.id });
+      if (error) throw error;
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['credit_score_latest'] }),
+        qc.invalidateQueries({ queryKey: ['profile'] }),
+      ]);
+      toast.success("Credit score updated");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setRecomputing(false);
+    }
+  };
+
   const activeLoans = loans.filter(l => ['approved', 'active', 'pending'].includes(l.status || ''));
   const interestRate = 2;
   const totalRepay = selectedAmount + (selectedAmount * interestRate * selectedDuration) / (100 * 30);
@@ -68,6 +108,12 @@ export default function Loans() {
           </div>
           <p className="text-xs text-primary-foreground/60 mt-2">Max eligible: ₹{Math.min((profile?.credit_score || 300) * 15, 10000).toLocaleString("en-IN")}</p>
         </div>
+
+        <CreditScorePanel
+          latest={latestScore}
+          recomputing={recomputing}
+          onRecompute={handleRecompute}
+        />
 
         <button onClick={() => setShowApply(true)}
           className="w-full py-3.5 rounded-xl gradient-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 mb-6 active:scale-[0.98] transition-transform shadow-card">
