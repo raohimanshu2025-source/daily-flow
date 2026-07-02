@@ -605,6 +605,63 @@ export type Database = {
         }
         Relationships: []
       }
+      upi_mandates: {
+        Row: {
+          created_at: string
+          frequency: string
+          id: string
+          loan_id: string
+          max_amount_paise: number
+          revoked_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          valid_until: string | null
+          vpa: string
+        }
+        Insert: {
+          created_at?: string
+          frequency?: string
+          id?: string
+          loan_id: string
+          max_amount_paise: number
+          revoked_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          valid_until?: string | null
+          vpa: string
+        }
+        Update: {
+          created_at?: string
+          frequency?: string
+          id?: string
+          loan_id?: string
+          max_amount_paise?: number
+          revoked_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valid_until?: string | null
+          vpa?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upi_mandates_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_balances"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "upi_mandates_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
