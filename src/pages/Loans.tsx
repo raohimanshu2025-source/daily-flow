@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { useLoans, useAddLoan, useProfile } from "@/hooks/use-cloud-data";
+import { useLoans, useAddLoan, useProfile, useLoanLedger, useRepayLoan, useUpiMandate, useCreateMandate, useRevokeMandate } from "@/hooks/use-cloud-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/MobileLayout";
-import { CreditCard, X, Clock, CheckCircle, AlertCircle, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { CreditCard, X, Clock, CheckCircle, AlertCircle, RefreshCw, TrendingUp, TrendingDown, Wallet, ShieldCheck, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 
 const loanAmounts = [500, 1000, 2000, 5000, 10000];
 const loanDurations = [7, 14, 30];
+const quickRepay = [100, 500, 1000, 2000];
 
 const FACTOR_META: Record<string, { label: string; good: (v: any) => boolean; format: (v: any) => string }> = {
   income_days_30:    { label: "Income days (30d)",  good: (v) => v >= 15,    format: (v) => `${v} days` },
