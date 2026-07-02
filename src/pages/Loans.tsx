@@ -339,3 +339,173 @@ export default function Loans() {
     </MobileLayout>
   );
 }
+
+function RepayModal({ loanId, loan, onClose }: { loanId: string; loan: any; onClose: () => void }) {
+  const { data: ledger = [] } = useLoanLedger(loanId);
+  const { data: mandate } = useUpiMandate(loanId);
+  const repay = useRepayLoan();
+  const createMandate = useCreateMandate();
+  const revokeMandate = useRevokeMandate();
+
+  const [amount, setAmount] = useState<number>(quickRepay[0]);
+  const [customAmount, setCustomAmount] = useState<string>("");
+  const [vpa, setVpa] = useState("");
+  const [maxAmount, setMaxAmount] = useState<number>(loan.amount);
+
+  const outstandingPaise = ledger[0]?.balance_after_paise ?? loan.amount * 100;
+  const outstandingRupees = Math.max(0, Math.round(outstandingPaise / 100));
+  const vpaValid = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$/.test(vpa.trim());
+
+  const handleRepay = async () => {
+    const amt = customAmount ? Number(customAmount) : amount;
+    if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
+    if (amt > outstandingRupees) { toast.error(`Max repayable: ₹${outstandingRupees}`); return; }
+    try {
+      await repay.mutateAsync({
+        loanId,
+        amount: amt,
+        referenceId: mandate?.status === 'active' ? `mandate:${mandate.id}` : `manual:${Date.now()}`,
+      });
+      toast.success(`₹${amt} repaid`);
+      setCustomAmount("");
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const handleCreateMandate = async () => {
+    if (!vpaValid) { toast.error("Enter a valid UPI ID (e.g. name@bank)"); return; }
+    if (maxAmount <= 0) { toast.error("Max amount must be positive"); return; }
+    try {
+      await createMandate.mutateAsync({ loanId, vpa, maxAmount });
+      toast.success("UPI auto-debit mandate active");
+      setVpa("");
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const handleRevoke = async () => {
+    if (!mandate) return;
+    if (!confirm("Revoke this UPI mandate? Auto-debit will stop.")) return;
+    try {
+      await revokeMandate.mutateAsync({ mandateId: mandate.id, loanId });
+      toast.success("Mandate revoked");
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
+      <div className="bg-card w-full max-w-md mx-auto rounded-t-3xl p-6 animate-slide-up max-h-[92vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-foreground">Repay Loan</h2>
+          <button onClick={onClose}><X className="h-5 w-5 text-muted-foreground" /></button>
+        </div>
+
+        <div className="gradient-primary rounded-2xl p-4 mb-4 text-primary-foreground">
+          <p className="text-xs opacity-70">Outstanding balance</p>
+          <p className="text-3xl font-bold">₹{outstandingRupees.toLocaleString("en-IN")}</p>
+          <p className="text-xs opacity-60 mt-1">Principal ₹{loan.amount} · {loan.duration}d · {loan.interest_rate}% /mo</p>
+        </div>
+
+        {/* Quick repay */}
+        <p className="text-sm font-medium text-foreground mb-2">Quick repay</p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {quickRepay.map((a) => (
+            <button
+              key={a}
+              onClick={() => { setAmount(a); setCustomAmount(""); }}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold ${amount === a && !customAmount ? "gradient-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+            >₹{a}</button>
+          ))}
+        </div>
+        <input
+          type="number"
+          placeholder="Or enter custom amount (₹)"
+          value={customAmount}
+          onChange={(e) => setCustomAmount(e.target.value)}
+          className="w-full mb-3 px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+        />
+        <button
+          onClick={handleRepay}
+          disabled={repay.isPending || outstandingRupees === 0}
+          className="w-full py-3 mb-5 rounded-xl gradient-primary text-primary-foreground font-bold active:scale-[0.98] transition disabled:opacity-40"
+        >
+          {repay.isPending ? "Processing…" : outstandingRupees === 0 ? "Fully repaid" : `Pay ₹${customAmount || amount} via UPI`}
+        </button>
+
+        {/* Mandate block */}
+        <div className="bg-muted/60 rounded-xl p-4 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            {mandate?.status === 'active' ? (
+              <ShieldCheck className="h-4 w-4 text-success" />
+            ) : (
+              <ShieldOff className="h-4 w-4 text-muted-foreground" />
+            )}
+            <p className="text-sm font-semibold text-foreground">UPI Auto-debit Mandate</p>
+          </div>
+          {mandate?.status === 'active' ? (
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>VPA: <span className="font-medium text-foreground">{mandate.vpa}</span></p>
+              <p>Max per debit: <span className="font-medium text-foreground">₹{Math.round(mandate.max_amount_paise / 100).toLocaleString("en-IN")}</span></p>
+              <p>Created {new Date(mandate.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
+              <button
+                onClick={handleRevoke}
+                disabled={revokeMandate.isPending}
+                className="mt-2 w-full py-2 rounded-lg bg-destructive/10 text-destructive text-xs font-semibold active:scale-95 transition disabled:opacity-40"
+              >
+                {revokeMandate.isPending ? "Revoking…" : "Revoke mandate"}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Authorize RozanaPay to auto-debit your UPI for repayments on due date. Cancel anytime.
+              </p>
+              <input
+                type="text"
+                placeholder="Your UPI ID (e.g. name@okhdfc)"
+                value={vpa}
+                onChange={(e) => setVpa(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <input
+                type="number"
+                placeholder="Max amount per debit (₹)"
+                value={maxAmount || ""}
+                onChange={(e) => setMaxAmount(Number(e.target.value))}
+                className="w-full px-3 py-2.5 rounded-lg bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <button
+                onClick={handleCreateMandate}
+                disabled={createMandate.isPending || !vpaValid}
+                className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.98] transition disabled:opacity-40"
+              >
+                {createMandate.isPending ? "Authorizing…" : "Authorize UPI mandate"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Ledger */}
+        <p className="text-sm font-semibold text-foreground mb-2">Payment history</p>
+        {ledger.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-3 text-center">No entries yet</p>
+        ) : (
+          <div className="space-y-1.5">
+            {ledger.slice(0, 10).map((e: any) => (
+              <div key={e.id} className="flex justify-between items-center text-xs py-2 border-b border-border/40">
+                <div>
+                  <p className="font-medium text-foreground capitalize">{e.entry_type.replace('_', ' ')}</p>
+                  <p className="text-muted-foreground">{new Date(e.posted_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
+                </div>
+                <div className="text-right">
+                  <p className={`font-semibold ${e.credit_paise > 0 ? 'text-success' : 'text-foreground'}`}>
+                    {e.credit_paise > 0 ? '−' : '+'}₹{Math.round((e.debit_paise || e.credit_paise) / 100).toLocaleString("en-IN")}
+                  </p>
+                  <p className="text-muted-foreground text-[10px]">Bal ₹{Math.round(e.balance_after_paise / 100).toLocaleString("en-IN")}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
