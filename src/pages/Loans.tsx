@@ -241,12 +241,28 @@ export default function Loans() {
                     </div>
                   </div>
                 )}
+                {['active','approved','disbursed'].includes(loan.status || '') && (
+                  <button
+                    onClick={() => setRepayLoanId(loan.id)}
+                    className="mt-3 w-full py-2 rounded-lg bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition"
+                  >
+                    <Wallet className="h-4 w-4" /> Repay & Manage UPI Mandate
+                  </button>
+                )}
               </div>
             );
           })}
           {loans.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">No loans yet</p>}
         </div>
       </div>
+
+      {repayLoanId && (
+        <RepayModal
+          loanId={repayLoanId}
+          loan={loans.find((l) => l.id === repayLoanId)!}
+          onClose={() => setRepayLoanId(null)}
+        />
+      )}
 
       {showApply && (
         <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
