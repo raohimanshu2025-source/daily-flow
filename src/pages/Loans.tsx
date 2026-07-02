@@ -107,6 +107,7 @@ export default function Loans() {
   const [selectedAmount, setSelectedAmount] = useState(2000);
   const [selectedDuration, setSelectedDuration] = useState(14);
   const [agreedTerms, setAgreedTerms] = useState(false);
+  const [repayLoanId, setRepayLoanId] = useState<string | null>(null);
 
   const { data: loans = [] } = useLoans();
   const { data: profile } = useProfile();
