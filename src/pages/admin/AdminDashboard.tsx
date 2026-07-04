@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
-import { Users, CreditCard, BarChart3, Shield, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, XCircle, Search, ShoppingCart } from "lucide-react";
+import { Users, CreditCard, BarChart3, Shield, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, XCircle, Search, ShoppingCart, FileCheck, ScrollText, ExternalLink } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { toast } from "sonner";
 
-type Tab = "overview" | "users" | "loans" | "bnpl" | "risk";
+type Tab = "overview" | "users" | "loans" | "bnpl" | "kyc" | "risk" | "audit";
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("overview");
@@ -44,7 +44,9 @@ export default function AdminDashboard() {
     { id: "users" as Tab, icon: Users, label: "Users" },
     { id: "loans" as Tab, icon: CreditCard, label: "Loans" },
     { id: "bnpl" as Tab, icon: ShoppingCart, label: "BNPL" },
+    { id: "kyc" as Tab, icon: FileCheck, label: "KYC" },
     { id: "risk" as Tab, icon: Shield, label: "Risk" },
+    { id: "audit" as Tab, icon: ScrollText, label: "Audit" },
   ];
 
   return (
@@ -75,7 +77,9 @@ export default function AdminDashboard() {
         {tab === "users" && <UsersTab />}
         {tab === "loans" && <LoansTab />}
         {tab === "bnpl" && <BnplTab />}
+        {tab === "kyc" && <KycTab />}
         {tab === "risk" && <RiskTab />}
+        {tab === "audit" && <AuditTab />}
       </div>
     </div>
   );
@@ -278,17 +282,23 @@ function LoansTab() {
   };
 
   const handleAction = async (loanId: string, action: 'approved' | 'rejected') => {
-    const updates: any = { status: action };
     if (action === 'approved') {
-      updates.approved_at = new Date().toISOString();
       const loan = loans.find(l => l.id === loanId);
-      if (loan) {
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + loan.duration);
-        updates.due_date = dueDate.toISOString();
-      }
+      const dueDate = new Date();
+      if (loan) dueDate.setDate(dueDate.getDate() + loan.duration);
+      // First set due_date + approved_at, then call disburse_loan RPC (which posts ledger + status)
+      const { error: updErr } = await supabase.from('loans')
+        .update({ approved_at: new Date().toISOString(), due_date: dueDate.toISOString() } as any)
+        .eq('id', loanId);
+      if (updErr) { toast.error(updErr.message); return; }
+      const { error } = await supabase.rpc('disburse_loan', { _loan_id: loanId });
+      if (error) { toast.error(error.message); return; }
+      toast.success('Loan approved & disbursed');
+    } else {
+      const { error } = await supabase.from('loans').update({ status: 'rejected' } as any).eq('id', loanId);
+      if (error) { toast.error(error.message); return; }
+      toast.success('Loan rejected');
     }
-    await supabase.from('loans').update(updates).eq('id', loanId);
     loadLoans();
   };
 
@@ -517,6 +527,192 @@ function RiskTab() {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function KycTab() {
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewing, setViewing] = useState<{ id: string; url: string } | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase.from('profiles').select('*').in('kyc_status', ['submitted', 'pending', 'rejected']).order('updated_at', { ascending: false });
+    setProfiles(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const viewDoc = async (p: any) => {
+    if (!p.kyc_doc_url) { toast.error('No document uploaded'); return; }
+    const { data, error } = await supabase.storage.from('kyc-documents').createSignedUrl(p.kyc_doc_url, 3600);
+    if (error || !data) { toast.error('Could not load document'); return; }
+    setViewing({ id: p.id, url: data.signedUrl });
+  };
+
+  const decide = async (userId: string, status: 'verified' | 'rejected') => {
+    const { error } = await supabase.from('profiles').update({ kyc_status: status } as any).eq('user_id', userId);
+    if (error) { toast.error(error.message); return; }
+    await supabase.rpc('log_audit_event', {
+      _action: `kyc.${status}`, _entity_type: 'profile', _entity_id: userId, _metadata: {},
+    });
+    // Recompute credit score to reflect KYC change
+    await supabase.rpc('compute_credit_score', { _user_id: userId });
+    toast.success(`KYC ${status}`);
+    setViewing(null);
+    load();
+  };
+
+  const submitted = profiles.filter(p => p.kyc_status === 'submitted');
+  const others = profiles.filter(p => p.kyc_status !== 'submitted');
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="font-black text-foreground mb-4">Pending KYC Review ({submitted.length}) 📄</h3>
+        {loading ? <p className="text-muted-foreground">Loading...</p> :
+        submitted.length === 0 ? (
+          <div className="bg-card rounded-2xl p-6 text-center shadow-card border border-border/50">
+            <p className="text-3xl mb-2">✅</p>
+            <p className="text-muted-foreground text-sm">No pending KYC submissions</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {submitted.map((p) => (
+              <motion.div key={p.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                className="bg-card rounded-2xl p-4 shadow-card border border-border/50 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex-1">
+                  <p className="font-bold text-foreground">{p.name || 'Unnamed'} · {p.phone || '—'}</p>
+                  <p className="text-xs text-muted-foreground">{p.occupation || '-'} · {p.city || '-'} · Submitted {new Date(p.updated_at).toLocaleDateString("en-IN")}</p>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => viewDoc(p)}
+                    className="px-3 py-2 rounded-xl bg-muted text-foreground text-sm font-bold flex items-center gap-1">
+                    <ExternalLink className="h-4 w-4" /> View Doc
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => decide(p.user_id, 'verified')}
+                    className="px-3 py-2 rounded-xl gradient-success text-white text-sm font-bold flex items-center gap-1">
+                    <CheckCircle className="h-4 w-4" /> Verify
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => decide(p.user_id, 'rejected')}
+                    className="px-3 py-2 rounded-xl bg-destructive/10 text-destructive text-sm font-bold flex items-center gap-1">
+                    <XCircle className="h-4 w-4" /> Reject
+                  </motion.button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-black text-foreground mb-4">Reviewed / Other ({others.length})</h3>
+        <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Name</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Phone</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {others.map(p => (
+                <tr key={p.id} className="border-b border-border/50 last:border-0">
+                  <td className="px-4 py-3 text-sm font-bold text-foreground">{p.name || 'Unnamed'}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{p.phone || '-'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-lg font-bold ${
+                      p.kyc_status === 'verified' ? 'bg-success/10 text-success' :
+                      p.kyc_status === 'rejected' ? 'bg-destructive/10 text-destructive' :
+                      'bg-muted text-muted-foreground'
+                    }`}>{p.kyc_status || 'pending'}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {viewing && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setViewing(null)}>
+          <div className="bg-card rounded-2xl p-4 max-w-3xl w-full max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-black text-foreground">KYC Document</h4>
+              <button onClick={() => setViewing(null)} className="text-muted-foreground hover:text-foreground">✕</button>
+            </div>
+            {/\.(png|jpe?g|webp|gif)$/i.test(viewing.url.split('?')[0]) ? (
+              <img src={viewing.url} alt="KYC document" className="w-full rounded-xl" />
+            ) : (
+              <iframe src={viewing.url} title="KYC document" className="w-full h-[70vh] rounded-xl bg-white" />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AuditTab() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("");
+
+  useEffect(() => {
+    supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(200)
+      .then(({ data }) => { setRows(data || []); setLoading(false); });
+  }, []);
+
+  const filtered = rows.filter(r =>
+    !filter ||
+    r.action?.toLowerCase().includes(filter.toLowerCase()) ||
+    r.entity_type?.toLowerCase().includes(filter.toLowerCase()) ||
+    r.entity_id?.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filter by action / entity..."
+            className="w-full pl-11 pr-4 py-3 rounded-xl bg-muted text-foreground font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+        </div>
+        <span className="text-sm text-muted-foreground font-bold">{filtered.length} events</span>
+      </div>
+
+      <div className="bg-card rounded-2xl shadow-card border border-border/50 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">When</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Action</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Entity</th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Meta</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Loading...</td></tr>
+              ) : filtered.map(r => (
+                <tr key={r.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30">
+                  <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(r.created_at).toLocaleString("en-IN")}</td>
+                  <td className="px-4 py-3 text-sm font-bold text-foreground">{r.action}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {r.entity_type ? <span className="font-bold">{r.entity_type}</span> : '-'}
+                    {r.entity_id && <span className="ml-1 font-mono">{r.entity_id.slice(0, 8)}…</span>}
+                  </td>
+                  <td className="px-4 py-3 text-xs font-mono text-muted-foreground max-w-xs truncate">{r.metadata ? JSON.stringify(r.metadata) : ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
