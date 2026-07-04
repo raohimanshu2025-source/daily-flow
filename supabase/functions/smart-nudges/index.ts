@@ -127,11 +127,28 @@ Return JSON array with exactly 5 nudges.`;
       nudges = JSON.parse(toolCall.function.arguments).nudges;
     }
 
-    return new Response(JSON.stringify({ nudges }), {
+    let persisted = 0;
+    if (persist && Array.isArray(nudges) && nudges.length > 0) {
+      const admin = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      const rows = nudges.slice(0, 5).map((n: any) => ({
+        user_id: user.id,
+        title: String(n.title || "Smart tip").slice(0, 120),
+        message: String(n.message || "").slice(0, 500),
+        type: n.type === "alert" ? "reminder" : n.type === "goal" ? "milestone" : n.type === "reward" ? "reward" : "tip",
+        icon: String(n.emoji || "💡").slice(0, 8),
+        read: false,
+      }));
+      const { error: insErr, data: insData } = await admin.from("notifications").insert(rows).select("id");
+      if (insErr) console.error("persist notifications error:", insErr);
+      else persisted = insData?.length ?? 0;
+    }
+
+    return new Response(JSON.stringify({ nudges, persisted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-
-    // (Unreachable — moved below)
   } catch (e) {
     console.error("smart-nudges error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
