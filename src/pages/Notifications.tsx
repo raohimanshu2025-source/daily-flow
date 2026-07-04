@@ -1,8 +1,8 @@
-import { useNotifications, useMarkNotificationsRead } from "@/hooks/use-cloud-data";
+import { useNotifications, useMarkNotificationsRead, useMarkOneNotificationRead, useDeleteNotification } from "@/hooks/use-cloud-data";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/hooks/use-language";
 import MobileLayout from "@/components/MobileLayout";
-import { ArrowLeft, CheckCheck } from "lucide-react";
+import { ArrowLeft, CheckCheck, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const typeColors: Record<string, string> = {
@@ -17,6 +17,8 @@ export default function Notifications() {
   const navigate = useNavigate();
   const { data: notifications = [] } = useNotifications();
   const markRead = useMarkNotificationsRead();
+  const markOne = useMarkOneNotificationRead();
+  const del = useDeleteNotification();
 
   return (
     <MobileLayout>
@@ -37,7 +39,11 @@ export default function Notifications() {
 
         <div className="space-y-3">
           {notifications.map((n) => (
-            <div key={n.id} className={`rounded-xl p-4 border transition-all ${typeColors[n.type] || ''} ${!n.read ? 'shadow-card' : 'opacity-70'}`}>
+            <div
+              key={n.id}
+              onClick={() => !n.read && markOne.mutate(n.id)}
+              className={`rounded-xl p-4 border transition-all cursor-pointer ${typeColors[n.type] || ''} ${!n.read ? 'shadow-card' : 'opacity-70'}`}
+            >
               <div className="flex items-start gap-3">
                 <span className="text-2xl">{n.icon}</span>
                 <div className="flex-1 min-w-0">
@@ -48,6 +54,13 @@ export default function Notifications() {
                   </p>
                 </div>
                 {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1" />}
+                <button
+                  onClick={(e) => { e.stopPropagation(); del.mutate(n.id); }}
+                  className="shrink-0 w-6 h-6 rounded-full hover:bg-muted flex items-center justify-center"
+                  aria-label="Delete notification"
+                >
+                  <X className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
               </div>
             </div>
           ))}
