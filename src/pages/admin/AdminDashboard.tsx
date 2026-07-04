@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
-import { Users, CreditCard, BarChart3, Shield, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, XCircle, Search, ShoppingCart } from "lucide-react";
+import { Users, CreditCard, BarChart3, Shield, ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, XCircle, Search, ShoppingCart, FileCheck, ScrollText, ExternalLink } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { toast } from "sonner";
 
-type Tab = "overview" | "users" | "loans" | "bnpl" | "risk";
+type Tab = "overview" | "users" | "loans" | "bnpl" | "kyc" | "risk" | "audit";
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("overview");
@@ -44,7 +44,9 @@ export default function AdminDashboard() {
     { id: "users" as Tab, icon: Users, label: "Users" },
     { id: "loans" as Tab, icon: CreditCard, label: "Loans" },
     { id: "bnpl" as Tab, icon: ShoppingCart, label: "BNPL" },
+    { id: "kyc" as Tab, icon: FileCheck, label: "KYC" },
     { id: "risk" as Tab, icon: Shield, label: "Risk" },
+    { id: "audit" as Tab, icon: ScrollText, label: "Audit" },
   ];
 
   return (
@@ -75,7 +77,9 @@ export default function AdminDashboard() {
         {tab === "users" && <UsersTab />}
         {tab === "loans" && <LoansTab />}
         {tab === "bnpl" && <BnplTab />}
+        {tab === "kyc" && <KycTab />}
         {tab === "risk" && <RiskTab />}
+        {tab === "audit" && <AuditTab />}
       </div>
     </div>
   );
@@ -278,17 +282,23 @@ function LoansTab() {
   };
 
   const handleAction = async (loanId: string, action: 'approved' | 'rejected') => {
-    const updates: any = { status: action };
     if (action === 'approved') {
-      updates.approved_at = new Date().toISOString();
       const loan = loans.find(l => l.id === loanId);
-      if (loan) {
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + loan.duration);
-        updates.due_date = dueDate.toISOString();
-      }
+      const dueDate = new Date();
+      if (loan) dueDate.setDate(dueDate.getDate() + loan.duration);
+      // First set due_date + approved_at, then call disburse_loan RPC (which posts ledger + status)
+      const { error: updErr } = await supabase.from('loans')
+        .update({ approved_at: new Date().toISOString(), due_date: dueDate.toISOString() } as any)
+        .eq('id', loanId);
+      if (updErr) { toast.error(updErr.message); return; }
+      const { error } = await supabase.rpc('disburse_loan', { _loan_id: loanId });
+      if (error) { toast.error(error.message); return; }
+      toast.success('Loan approved & disbursed');
+    } else {
+      const { error } = await supabase.from('loans').update({ status: 'rejected' } as any).eq('id', loanId);
+      if (error) { toast.error(error.message); return; }
+      toast.success('Loan rejected');
     }
-    await supabase.from('loans').update(updates).eq('id', loanId);
     loadLoans();
   };
 
