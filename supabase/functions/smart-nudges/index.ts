@@ -22,6 +22,14 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) throw new Error("Unauthorized");
 
+    let persist = false;
+    if (req.method === "POST") {
+      try {
+        const body = await req.json();
+        persist = body?.persist === true;
+      } catch { /* no body */ }
+    }
+
     // Fetch user data
     const [incomeRes, expenseRes, savingsRes, loansRes, profileRes] = await Promise.all([
       supabase.from('income_logs').select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(30),
@@ -122,6 +130,8 @@ Return JSON array with exactly 5 nudges.`;
     return new Response(JSON.stringify({ nudges }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
+    // (Unreachable — moved below)
   } catch (e) {
     console.error("smart-nudges error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
