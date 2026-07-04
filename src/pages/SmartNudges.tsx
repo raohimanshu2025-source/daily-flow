@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import MobileLayout from "@/components/MobileLayout";
-import { Brain, TrendingUp, PiggyBank, AlertTriangle, Target, Lightbulb, ArrowRight, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
+import { Brain, TrendingUp, PiggyBank, AlertTriangle, Target, Lightbulb, ArrowRight, RefreshCw, Loader2, ArrowLeft, BellPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Nudge {
   title: string;
@@ -33,8 +34,10 @@ const typeIcons: Record<string, any> = {
 export default function SmartNudges() {
   const [nudges, setNudges] = useState<Nudge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   const fetchNudges = async () => {
     if (!user) return;
@@ -60,6 +63,22 @@ export default function SmartNudges() {
 
   useEffect(() => { fetchNudges(); }, [user]);
 
+  const saveToFeed = async () => {
+    if (!user || nudges.length === 0) return;
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('smart-nudges', { body: { persist: true } });
+      if (error) throw error;
+      if (data?.nudges) setNudges(data.nudges);
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success(`Saved ${data?.persisted ?? 0} nudges to your feed`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Could not save to feed");
+    }
+    setSaving(false);
+  };
+
   return (
     <MobileLayout>
       <div className="px-5 pt-6">
@@ -73,10 +92,17 @@ export default function SmartNudges() {
               <p className="text-xs text-muted-foreground">AI-powered tips for your finances</p>
             </div>
           </div>
-          <button onClick={fetchNudges} disabled={loading}
-            className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center disabled:opacity-50">
-            <RefreshCw className={`h-4 w-4 text-primary ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={saveToFeed} disabled={loading || saving || nudges.length === 0}
+              className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-xs font-bold flex items-center gap-1.5 disabled:opacity-50">
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellPlus className="h-3.5 w-3.5" />}
+              Save to feed
+            </button>
+            <button onClick={fetchNudges} disabled={loading}
+              className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center disabled:opacity-50">
+              <RefreshCw className={`h-4 w-4 text-primary ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {loading ? (
