@@ -1,19 +1,25 @@
+import { useState } from "react";
 import MobileLayout from "@/components/MobileLayout";
-import { Award, Download, TrendingUp, Shield, Clock, PiggyBank } from "lucide-react";
-import { store } from "@/lib/store";
+import { Award, Download, TrendingUp, Shield, Clock, PiggyBank, Loader2, Share2 } from "lucide-react";
+import { useProfile, useIncomeLogs, useSavingsGoals, useLoans, useExpenses } from "@/hooks/use-cloud-data";
+import { generateCreditReport } from "@/lib/credit-report";
+import { toast } from "sonner";
 
 export default function CreditExport() {
-  const user = store.getUser();
-  const score = user?.creditScore || 300;
-  const income = store.getIncome();
-  const savings = store.getSavings();
-  const loans = store.getLoans();
-  const daysActive = income.length;
-  const totalSaved = store.getTotalSavings();
-  const loansRepaid = loans.filter(l => l.status === 'repaid').length;
+  const [exporting, setExporting] = useState(false);
+  const { data: profile } = useProfile();
+  const { data: income = [] } = useIncomeLogs();
+  const { data: savings = [] } = useSavingsGoals();
+  const { data: loans = [] } = useLoans();
+  const { data: expenses = [] } = useExpenses();
+
+  const score = profile?.credit_score || 300;
+  const daysActive = new Set(income.map((i: any) => i.date?.slice(0, 10))).size;
+  const totalSaved = savings.reduce((s: number, g: any) => s + (g.current_amount || 0), 0);
+  const loansRepaid = loans.filter((l: any) => l.status === 'repaid' || l.status === 'closed').length;
 
   const scoreColor = score >= 700 ? 'text-success' : score >= 500 ? 'text-warning' : 'text-destructive';
-  const scoreLabel = score >= 700 ? 'Excellent' : score >= 500 ? 'Good' : 'Building';
+  const scoreLabel = score >= 800 ? 'Excellent' : score >= 700 ? 'Good' : score >= 600 ? 'Fair' : score >= 500 ? 'Poor' : 'Building';
 
   const factors = [
     { icon: TrendingUp, label: "Income Consistency", value: `${daysActive} days logged`, score: Math.min(daysActive * 5, 100) },
@@ -21,6 +27,33 @@ export default function CreditExport() {
     { icon: Clock, label: "Repayment History", value: `${loansRepaid} loans repaid`, score: loansRepaid > 0 ? 80 : 20 },
     { icon: Shield, label: "App Activity", value: `${daysActive + savings.length} actions`, score: Math.min((daysActive + savings.length) * 3, 100) },
   ];
+
+  const handleExport = async (share: boolean) => {
+    setExporting(true);
+    try {
+      const blob = await generateCreditReport({
+        profile, income, savings, loans, expenses, score, scoreLabel, factors,
+      });
+      const filename = `RozanaPay_Credit_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
+      if (share && navigator.canShare) {
+        const file = new File([blob], filename, { type: 'application/pdf' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'RozanaPay Credit Report' });
+          setExporting(false);
+          return;
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Credit report downloaded");
+    } catch (e) {
+      console.error(e);
+      toast.error("Could not generate report");
+    }
+    setExporting(false);
+  };
 
   return (
     <MobileLayout>
@@ -71,9 +104,21 @@ export default function CreditExport() {
         </div>
 
         {/* Export */}
-        <button className="w-full py-3.5 rounded-xl gradient-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 shadow-elevated mb-4">
-          <Download className="h-5 w-5" />
-          Export Credit Report
+        <button
+          onClick={() => handleExport(false)}
+          disabled={exporting}
+          className="w-full py-3.5 rounded-xl gradient-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 shadow-elevated mb-3 disabled:opacity-50"
+        >
+          {exporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
+          {exporting ? "Generating…" : "Download Credit Report (PDF)"}
+        </button>
+        <button
+          onClick={() => handleExport(true)}
+          disabled={exporting}
+          className="w-full py-3 rounded-xl bg-muted text-foreground font-semibold flex items-center justify-center gap-2 mb-4 disabled:opacity-50"
+        >
+          <Share2 className="h-4 w-4" />
+          Share with Bank / NBFC
         </button>
         <p className="text-xs text-center text-muted-foreground mb-6">
           Share your financial identity with banks & NBFCs to access formal credit
