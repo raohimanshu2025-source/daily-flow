@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,6 +16,16 @@ export default function PhoneLogin() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const safeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
+  const goNext = (fallback: string) => {
+    if (safeNext) {
+      window.location.href = safeNext;
+    } else {
+      navigate(fallback);
+    }
+  };
 
   const handlePhoneLogin = async () => {
     if (phone.length !== 10) return;
@@ -41,28 +51,30 @@ export default function PhoneLogin() {
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     toast.success("OTP sent!");
-    navigate("/onboarding/otp", { state: { phone } });
+    navigate("/onboarding/otp", { state: { phone, next: safeNext } });
   };
 
   const handleEmailAuth = async () => {
     if (!email || !password) return;
     setLoading(true);
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
+      const emailRedirect = safeNext ? window.location.origin + safeNext : window.location.origin;
+      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: emailRedirect } });
       setLoading(false);
       if (error) { toast.error(error.message); return; }
       toast.success("Account created!");
-      navigate("/onboarding/profile");
+      goNext("/onboarding/profile");
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setLoading(false);
       if (error) { toast.error(error.message); return; }
-      navigate("/dashboard");
+      goNext("/dashboard");
     }
   };
 
   const handleGoogleLogin = async () => {
-    const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const redirectUri = safeNext ? window.location.origin + safeNext : window.location.origin;
+    const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: redirectUri });
     if (error) toast.error(error.message);
   };
 
