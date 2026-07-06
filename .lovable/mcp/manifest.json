@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://pkgcgzrehvlzdsxbzaqp.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "rozanapay-mcp",
+      "version": "0.1.0",
+      "title": "RozanaPay"
+    },
+    "tools": [
+      {
+        "name": "get_profile",
+        "title": "Get my RozanaPay profile",
+        "description": "Return the signed-in user's RozanaPay profile including name, phone, occupation, city, KYC status and current credit score.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_summary",
+        "title": "Get financial summary",
+        "description": "High-level snapshot for the signed-in user: 30-day income and expenses, savings balance, active loans and credit score.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_income",
+        "title": "List recent income",
+        "description": "List the signed-in user's recent income entries. Defaults to the last 30 days.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "days": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 365,
+              "description": "How many trailing days to include. Default 30."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "log_income",
+        "title": "Log income",
+        "description": "Record a new income entry (in rupees) for the signed-in user.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Amount in rupees."
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Where the income came from, e.g. 'Uber', 'Tips', 'Delivery'."
+            },
+            "note": {
+              "type": "string",
+              "description": "Optional note."
+            },
+            "date": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO timestamp. Defaults to now."
+            }
+          },
+          "required": [
+            "amount",
+            "source"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "log_expense",
+        "title": "Log expense",
+        "description": "Record a new expense (in rupees) for the signed-in user.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Amount in rupees."
+            },
+            "category": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Expense category, e.g. 'Food', 'Fuel', 'Rent'."
+            },
+            "note": {
+              "type": "string"
+            },
+            "date": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO timestamp. Defaults to now."
+            }
+          },
+          "required": [
+            "amount",
+            "category"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_loans",
+        "title": "List my loans",
+        "description": "List all loans (pending, active, repaid) for the signed-in user.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

@@ -19,6 +19,8 @@ export default function OtpVerify() {
   const navigate = useNavigate();
   const location = useLocation();
   const phone = (location.state as { phone?: string })?.phone || "";
+  const nextPath = (location.state as { next?: string | null })?.next || null;
+  const safeNext = nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : null;
 
   const tt = (en: string, hi: string) => (lang === 'hi' ? hi : en);
 
@@ -48,8 +50,11 @@ export default function OtpVerify() {
     }
     setVerified(true);
     toast.success(tt("Verified!", "सत्यापित!"));
-    setTimeout(() => navigate("/onboarding/profile"), 700);
-  }, [phone, loading, navigate, lang]);
+    setTimeout(() => {
+      if (safeNext) window.location.href = safeNext;
+      else navigate("/onboarding/profile");
+    }, 700);
+  }, [phone, loading, navigate, lang, safeNext]);
 
   const handleChange = (idx: number, val: string) => {
     const digits = val.replace(/\D/g, "");
