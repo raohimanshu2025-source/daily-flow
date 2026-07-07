@@ -302,6 +302,18 @@ function LoansTab() {
     loadLoans();
   };
 
+  const handlePartnerDisburse = async (loanId: string) => {
+    const { data, error } = await supabase.functions.invoke('partner-nbfc', {
+      body: { action: 'disburse', loan_id: loanId },
+    });
+    if (error || !data?.ok) {
+      toast.error(data?.error || error?.message || 'Partner disbursement failed');
+      return;
+    }
+    toast.success(`Disbursed via partner (Ref: ${data.partner?.reference_id})`);
+    loadLoans();
+  };
+
   const pendingLoans = loans.filter(l => l.status === 'pending');
   const otherLoans = loans.filter(l => l.status !== 'pending');
 
@@ -328,6 +340,10 @@ function LoansTab() {
                   <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(loan.id, 'approved')}
                     className="px-4 py-2 rounded-xl gradient-success text-white text-sm font-bold flex items-center gap-1 shadow-glow-success">
                     <CheckCircle className="h-4 w-4" /> Approve
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => handlePartnerDisburse(loan.id)}
+                    className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-bold flex items-center gap-1">
+                    🏦 Via Partner
                   </motion.button>
                   <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(loan.id, 'rejected')}
                     className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive text-sm font-bold flex items-center gap-1">
