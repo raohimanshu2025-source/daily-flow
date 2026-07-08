@@ -1,12 +1,16 @@
 import { useState } from "react";
 import MobileLayout from "@/components/MobileLayout";
-import { Award, Download, TrendingUp, Shield, Clock, PiggyBank, Loader2, Share2 } from "lucide-react";
+import { Award, Download, TrendingUp, Shield, Clock, PiggyBank, Loader2, Share2, FileJson } from "lucide-react";
 import { useProfile, useIncomeLogs, useSavingsGoals, useLoans, useExpenses } from "@/hooks/use-cloud-data";
 import { generateCreditReport } from "@/lib/credit-report";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
 export default function CreditExport() {
   const [exporting, setExporting] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
+  const { user } = useAuth();
   const { data: profile } = useProfile();
   const { data: income = [] } = useIncomeLogs();
   const { data: savings = [] } = useSavingsGoals();
@@ -53,6 +57,42 @@ export default function CreditExport() {
       toast.error("Could not generate report");
     }
     setExporting(false);
+  };
+
+  // DPDP Act 2023 §11: users have the right to receive all personal data
+  // held about them in a portable machine-readable format.
+  const handleDataExport = async () => {
+    if (!user) return;
+    setExportingData(true);
+    try {
+      const tables = [
+        'profiles','income_logs','expenses','savings_goals','loans','loan_ledger',
+        'transactions','bnpl_orders','bill_payments','gold_investments','group_savings',
+        'insurance_policies','notifications','rewards','upi_mandates','credit_score_history',
+      ] as const;
+      const bundle: Record<string, unknown> = {
+        exported_at: new Date().toISOString(),
+        user_id: user.id,
+        email: user.email ?? null,
+        notice: 'Personal data export under DPDP Act 2023.',
+      };
+      for (const t of tables) {
+        const { data, error } = await supabase.from(t as any).select('*');
+        bundle[t] = error ? { error: error.message } : data;
+      }
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RozanaPay_MyData_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Your data has been downloaded');
+    } catch (e) {
+      console.error(e);
+      toast.error('Could not export your data');
+    }
+    setExportingData(false);
   };
 
   return (
@@ -123,6 +163,22 @@ export default function CreditExport() {
         <p className="text-xs text-center text-muted-foreground mb-6">
           Share your financial identity with banks & NBFCs to access formal credit
         </p>
+
+        {/* DPDP data portability */}
+        <div className="border-t border-border/50 pt-5 mb-8">
+          <h3 className="text-sm font-black text-foreground mb-1">Your data, your right 🛡️</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            Download every record we hold about you as a JSON file (DPDP Act 2023).
+          </p>
+          <button
+            onClick={handleDataExport}
+            disabled={exportingData}
+            className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {exportingData ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileJson className="h-4 w-4" />}
+            {exportingData ? 'Preparing…' : 'Download my data (JSON)'}
+          </button>
+        </div>
       </div>
     </MobileLayout>
   );
