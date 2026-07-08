@@ -570,12 +570,17 @@ function KycTab() {
   };
 
   const decide = async (userId: string, status: 'verified' | 'rejected') => {
-    const { error } = await supabase.from('profiles').update({ kyc_status: status } as any).eq('user_id', userId);
-    if (error) { toast.error(error.message); return; }
-    await supabase.rpc('log_audit_event', {
-      _action: `kyc.${status}`, _entity_type: 'profile', _entity_id: userId, _metadata: {},
+    const notes = status === 'rejected'
+      ? window.prompt('Reason for rejection (shown to user):', 'Documents unclear. Please re-upload.') ?? undefined
+      : window.prompt('Optional note for the user:', '') ?? undefined;
+    // admin_review_kyc updates status, records reviewer + notes, sends the user a
+    // notification, and writes an audit event — all in one atomic call.
+    const { error } = await supabase.rpc('admin_review_kyc' as any, {
+      _user_id: userId,
+      _decision: status,
+      _notes: notes || null,
     });
-    // Recompute credit score to reflect KYC change
+    if (error) { toast.error(error.message); return; }
     await supabase.rpc('compute_credit_score', { _user_id: userId });
     toast.success(`KYC ${status}`);
     setViewing(null);
