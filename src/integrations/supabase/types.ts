@@ -375,6 +375,9 @@ export type Database = {
           duration: number
           id: string
           interest_rate: number
+          last_payment_at: string | null
+          last_payment_ref: string | null
+          last_payment_status: string | null
           repaid_amount: number
           status: string | null
           updated_at: string
@@ -389,6 +392,9 @@ export type Database = {
           duration: number
           id?: string
           interest_rate?: number
+          last_payment_at?: string | null
+          last_payment_ref?: string | null
+          last_payment_status?: string | null
           repaid_amount?: number
           status?: string | null
           updated_at?: string
@@ -403,6 +409,9 @@ export type Database = {
           duration?: number
           id?: string
           interest_rate?: number
+          last_payment_at?: string | null
+          last_payment_ref?: string | null
+          last_payment_status?: string | null
           repaid_amount?: number
           status?: string | null
           updated_at?: string
@@ -470,6 +479,9 @@ export type Database = {
           id: string
           income_type: string | null
           kyc_doc_url: string | null
+          kyc_review_notes: string | null
+          kyc_reviewed_at: string | null
+          kyc_reviewed_by: string | null
           kyc_status: string | null
           name: string
           occupation: string | null
@@ -485,6 +497,9 @@ export type Database = {
           id?: string
           income_type?: string | null
           kyc_doc_url?: string | null
+          kyc_review_notes?: string | null
+          kyc_reviewed_at?: string | null
+          kyc_reviewed_by?: string | null
           kyc_status?: string | null
           name?: string
           occupation?: string | null
@@ -500,6 +515,9 @@ export type Database = {
           id?: string
           income_type?: string | null
           kyc_doc_url?: string | null
+          kyc_review_notes?: string | null
+          kyc_reviewed_at?: string | null
+          kyc_reviewed_by?: string | null
           kyc_status?: string | null
           name?: string
           occupation?: string | null
@@ -700,6 +718,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_review_kyc: {
+        Args: { _decision: string; _notes?: string; _user_id: string }
+        Returns: undefined
+      }
       check_otp_rate_limit: { Args: { _phone: string }; Returns: boolean }
       compute_credit_score: { Args: { _user_id: string }; Returns: number }
       disburse_loan: { Args: { _loan_id: string }; Returns: string }
