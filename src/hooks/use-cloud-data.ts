@@ -540,3 +540,43 @@ export function useDeleteNotification() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   });
 }
+
+// ====== SUPPORT / GRIEVANCE TICKETS ======
+export function useSupportTickets() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['support_tickets', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+}
+
+export function useCreateTicket() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (t: { category: string; subject: string; description: string; reference_id?: string | null }) => {
+      const { data, error } = await supabase
+        .from('support_tickets')
+        .insert({ ...t, user_id: user!.id })
+        .select()
+        .single();
+      if (error) throw error;
+      await supabase.rpc('log_audit_event', {
+        _action: 'grievance.created',
+        _entity_type: 'support_ticket',
+        _entity_id: data.id,
+        _metadata: { category: t.category },
+      });
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['support_tickets'] }),
+  });
+}
