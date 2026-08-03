@@ -32,6 +32,7 @@ import SmartNudges from "./pages/SmartNudges";
 import Expenses from "./pages/Expenses";
 import Notifications from "./pages/Notifications";
 import KycUpload from "./pages/KycUpload";
+import Support from "./pages/Support";
 import OAuthConsent from "./pages/OAuthConsent";
 import NotFound from "./pages/NotFound";
 
@@ -84,6 +85,7 @@ function AppRoutes() {
       <Route path="/credit-export" element={<ProtectedRoute><CreditExport /></ProtectedRoute>} />
       <Route path="/smart-nudges" element={<ProtectedRoute><SmartNudges /></ProtectedRoute>} />
       <Route path="/kyc" element={<ProtectedRoute><KycUpload /></ProtectedRoute>} />
+      <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
       <Route path="*" element={<NotFound />} />
