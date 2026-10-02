@@ -1,6 +1,6 @@
 # CLAUDE.md — RozanaPay project context
 
-Claude Code reads this file automatically. Read it fully before you change anything, then read `HANDOVER.md` (setup) and `BACKEND_SETUP.md` (backend rebuild).
+Claude Code reads this file automatically. Read it fully before you change anything, then read `HANDOVER.md` (setup), `BACKEND_SETUP.md` (backend rebuild) and `CONVERSATION.md` (the full chat history between the owner and the AI that built this app — every decision, correction and open item, oldest first).
 
 ## Goal for whoever picks this up
 The app must look and behave **exactly** as it does on the live demo (https://rozana-pocket-power.lovable.app). Do not redesign, rename, re-theme or "clean up" the UI unless the owner asks for it. Reference screenshots are in `docs/screenshots/`.
