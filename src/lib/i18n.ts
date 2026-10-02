@@ -83,6 +83,13 @@ const translations = {
   // Notifications
   'notif.title': { en: 'Notifications', hi: 'सूचनाएं' },
   'notif.empty': { en: 'No new notifications', hi: 'कोई नई सूचना नहीं' },
+
+  // Welcome (landing) — honest product facts, no invented metrics
+  'welcome.stat.loans': { en: 'Micro-loans', hi: 'छोटे लोन' },
+  'welcome.stat.score': { en: 'Credit score', hi: 'क्रेडिट स्कोर' },
+  'welcome.stat.lang.value': { en: 'हिं + EN', hi: 'हिं + EN' },
+  'welcome.stat.lang': { en: 'Languages', hi: 'भाषाएं' },
+  'welcome.trust': { en: 'Secure login • Your data stays private', hi: 'सुरक्षित लॉगिन • आपका डेटा निजी रहता है' },
 } as const;
 
 type TranslationKey = keyof typeof translations;

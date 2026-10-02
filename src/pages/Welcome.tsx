@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Shield, Zap, PiggyBank, TrendingUp, Star, Wallet, Gift, ChevronRight } from "lucide-react";
 import logo from "@/assets/rozanapay-logo.png";
+import { t } from "@/lib/i18n";
 
 const features = [
   { icon: TrendingUp, title: "Track Income", desc: "Log daily earnings", emoji: "💰", bg: "gradient-primary", shadow: "shadow-glow" },
@@ -106,9 +107,9 @@ export default function Welcome() {
             <p className="text-white/60 text-xs mb-4">Track income, save smartly, access micro-loans — all in one app</p>
             <div className="flex gap-4">
               {[
-                { label: "10L+", sub: "Users" },
-                { label: "₹50Cr+", sub: "Disbursed" },
-                { label: "4.8★", sub: "Rating" },
+                { label: "₹500–10K", sub: t("welcome.stat.loans") },
+                { label: "300–900", sub: t("welcome.stat.score") },
+                { label: t("welcome.stat.lang.value"), sub: t("welcome.stat.lang") },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
@@ -136,7 +137,7 @@ export default function Welcome() {
               whileHover={{ scale: 1.03, y: -2 }}
               whileTap={{ scale: 0.97 }}
             >
-              <div className="absolute -top-2 -right-2 text-3xl opacity-10 group-hover:opacity-20 transition-opacity">{f.emoji}</div>
+              <div className="absolute top-2 right-2 text-2xl opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">{f.emoji}</div>
               <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center mb-2 ${f.shadow}`}>
                 <f.icon className="h-5 w-5 text-white" />
               </div>
@@ -175,7 +176,7 @@ export default function Welcome() {
 
           <div className="flex items-center justify-center gap-2 pt-1">
             <Shield className="h-3.5 w-3.5 text-success" />
-            <p className="text-xs text-muted-foreground">RBI Licensed • Bank-grade encryption 🔒</p>
+            <p className="text-xs text-muted-foreground">{t("welcome.trust")} 🔒</p>
           </div>
         </motion.div>
       </div>
