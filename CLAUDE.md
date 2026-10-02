@@ -46,6 +46,16 @@ Users have low digital literacy: big tap targets, little text, Hindi + English t
 - KYC files go to private bucket `kyc-documents` via signed URLs.
 - OTP requests are rate-limited server-side.
 
+## Backend (since 2026-10-03)
+- Own Supabase project `pgwhilwdivniwzrwimae` (Mumbai, ap-south-1); site hosted on Netlify at https://rozanapay.netlify.app (auto-deploys from `main`). Lovable Cloud is no longer used.
+- `supabase/migrations/20261003000000_security_and_money_fixes.sql` documents the security/money fixes on top of the original 13 migrations.
+- Loans: users may only INSERT `pending` loans of ₹500–10,000 (trigger `guard_loan_insert`). Statuses: pending → disbursed → (overdue) → repaid; also approved/rejected/closed.
+- Ledger: `post_loan_entry` is server-only. Borrowers repay via `repay_loan()`, which only works while `app_settings.simulated_repayments = 'on'`. When a real payment gateway is added, repayments must be posted from its webhook and that setting turned off.
+- Ledger order is `loan_ledger.seq`, never timestamps.
+- Nightly pg_cron jobs: `run_daily_loan_charges()` (interest only after disbursal; late fee capped by `app_settings.late_fee_cap_pct`) and `recompute_all_credit_scores()`.
+- Trusted SQL functions bypass protected-column guards with `set_config('rozanapay.internal','on',true)`; never use `session_replication_role`.
+- AI functions (`chat`, `smart-nudges`) need the `AI_API_KEY` secret (any OpenAI-compatible API; defaults to Gemini). `chat` requires a signed-in user's token.
+
 ## Rules
 1. Keep the look identical; compare with `docs/screenshots/` and the live demo.
 2. Every new table: GRANTs + RLS enabled + policies in the same migration.
