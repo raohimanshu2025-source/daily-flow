@@ -1,0 +1,14 @@
+# Netlify build settings for RozanaPay (Vite + React SPA)
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# React Router: send every route to index.html so deep links
+# like /dashboard or /loans work on refresh.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
