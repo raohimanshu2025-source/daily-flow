@@ -5,8 +5,7 @@
 //   POST /  { action: "status",   loan_id }  → fetch partner-side status for a loan
 //   POST /  { action: "kyc_push", user_id }  → simulate KYC push to partner
 // Auth: user JWT (admin-only for disburse/kyc_push).
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +25,7 @@ async function simulatePartnerApi(payload: unknown) {
   };
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -35,7 +34,7 @@ serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!,
+      Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
     );
     const service = createClient(
@@ -70,11 +69,6 @@ serve(async (req) => {
       // Use built-in disburse RPC (does ledger + status update)
       const { data: ledgerId, error: de } = await service.rpc("disburse_loan", { _loan_id: loanId });
       if (de) throw de;
-
-      // Set due_date if missing
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + Number(loan.duration || 30));
-      await service.from("loans").update({ due_date: dueDate.toISOString() }).eq("id", loanId);
 
       // Audit
       await service.rpc("log_audit_event", {

@@ -1,12 +1,12 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
+// AI: any OpenAI-compatible API. Secrets: AI_API_KEY (required), AI_BASE_URL, AI_MODEL (optional).
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -15,7 +15,7 @@ serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!,
+      Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
 
@@ -47,13 +47,19 @@ serve(async (req) => {
       profile: profileRes.data,
     };
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const AI_API_KEY = Deno.env.get("AI_API_KEY");
+    if (!AI_API_KEY) {
+      return new Response(JSON.stringify({ error: "Smart nudges aren't set up yet. Please try again later." }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const AI_BASE_URL = Deno.env.get("AI_BASE_URL") ?? "https://generativelanguage.googleapis.com/v1beta/openai";
+    const AI_MODEL = Deno.env.get("AI_MODEL") ?? "gemini-2.5-flash";
 
     const totalIncome = userData.income.reduce((s: number, i: any) => s + i.amount, 0);
     const totalExpenses = userData.expenses.reduce((s: number, e: any) => s + e.amount, 0);
     const totalSavings = userData.savings.reduce((s: number, g: any) => s + g.current_amount, 0);
-    const activeLoans = userData.loans.filter((l: any) => l.status === 'active' || l.status === 'approved');
+    const activeLoans = userData.loans.filter((l: any) => ['disbursed', 'active', 'overdue'].includes(l.status));
 
     const prompt = `Analyze this Indian daily wage worker's financial data and give exactly 5 personalized, actionable financial nudges. Each nudge should be specific to their data.
 
@@ -67,14 +73,14 @@ Credit score: ${userData.profile?.credit_score || 300}
 
 Return JSON array with exactly 5 nudges.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${AI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: AI_MODEL,
         messages: [
           { role: "system", content: "You are a financial advisor for Indian daily wage workers. Return ONLY valid JSON." },
           { role: "user", content: prompt },
@@ -100,16 +106,14 @@ Return JSON array with exactly 5 nudges.`;
                       action_route: { type: "string" },
                     },
                     required: ["title", "message", "type", "emoji"],
-                    additionalProperties: false,
                   },
                 },
               },
               required: ["nudges"],
-              additionalProperties: false,
             },
           },
         }],
-        tool_choice: { type: "function", function: { name: "return_nudges" } },
+        tool_choice: "required",
       }),
     });
 

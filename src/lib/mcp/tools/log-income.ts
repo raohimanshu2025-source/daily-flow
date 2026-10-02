@@ -3,7 +3,7 @@ import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 
 function sb(ctx: ToolContext) {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+  return createClient(process.env.SUPABASE_URL!, (process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY)!, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -24,7 +24,7 @@ export default defineTool({
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     const { data, error } = await sb(ctx)
       .from("income_logs")
-      .insert({ user_id: ctx.getUserId(), amount, source, note: note ?? null, date: date ?? new Date().toISOString() })
+      .insert({ user_id: ctx.getUserId(), amount: Math.round(amount), source: note ? `${source} (${note})`.slice(0, 120) : source, date: date ?? new Date().toISOString() })
       .select()
       .maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };

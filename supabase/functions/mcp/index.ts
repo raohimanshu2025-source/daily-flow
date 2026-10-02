@@ -9,7 +9,7 @@ import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { createClient } from "npm:@supabase/supabase-js@^2.98.0";
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
 function sb(ctx) {
-  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+  return createClient(process.env.SUPABASE_URL, (process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY), {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
@@ -32,7 +32,7 @@ var get_profile_default = defineTool({
 import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.98.0";
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
 function sb2(ctx) {
-  return createClient2(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+  return createClient2(process.env.SUPABASE_URL, (process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY), {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
@@ -50,8 +50,8 @@ var get_summary_default = defineTool2({
     const [incomeRes, expRes, savRes, loansRes, profRes] = await Promise.all([
       client.from("income_logs").select("amount").gte("date", since),
       client.from("expenses").select("amount").gte("date", since),
-      client.from("savings_goals").select("current_amount, target_amount, title"),
-      client.from("loans").select("id, amount, status, due_date").in("status", ["disbursed", "approved", "pending"]),
+      client.from("savings_goals").select("current_amount, target_amount, name"),
+      client.from("loans").select("id, amount, status, due_date").in("status", ["pending", "approved", "disbursed", "active", "overdue"]),
       client.from("profiles").select("credit_score, kyc_status").eq("user_id", ctx.getUserId()).maybeSingle()
     ]);
     const err = incomeRes.error || expRes.error || savRes.error || loansRes.error || profRes.error;
@@ -85,7 +85,7 @@ import { createClient as createClient3 } from "npm:@supabase/supabase-js@^2.98.0
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z } from "npm:zod@^3.25.76";
 function sb3(ctx) {
-  return createClient3(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+  return createClient3(process.env.SUPABASE_URL, (process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY), {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
@@ -102,7 +102,7 @@ var list_income_default = defineTool3({
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     const d = days ?? 30;
     const since = new Date(Date.now() - d * 24 * 60 * 60 * 1e3).toISOString();
-    const { data, error } = await sb3(ctx).from("income_logs").select("id, amount, source, note, date, created_at").gte("date", since).order("date", { ascending: false });
+    const { data, error } = await sb3(ctx).from("income_logs").select("id, amount, source, payment_type, date, created_at").gte("date", since).order("date", { ascending: false });
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     const total = (data ?? []).reduce((s, r) => s + Number(r.amount ?? 0), 0);
     return {
@@ -117,7 +117,7 @@ import { createClient as createClient4 } from "npm:@supabase/supabase-js@^2.98.0
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z2 } from "npm:zod@^3.25.76";
 function sb4(ctx) {
-  return createClient4(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+  return createClient4(process.env.SUPABASE_URL, (process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY), {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
@@ -135,7 +135,7 @@ var log_income_default = defineTool4({
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ amount, source, note, date }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const { data, error } = await sb4(ctx).from("income_logs").insert({ user_id: ctx.getUserId(), amount, source, note: note ?? null, date: date ?? (/* @__PURE__ */ new Date()).toISOString() }).select().maybeSingle();
+    const { data, error } = await sb4(ctx).from("income_logs").insert({ user_id: ctx.getUserId(), amount: Math.round(amount), source: note ? `${source} (${note})`.slice(0, 120) : source, date: date ?? (/* @__PURE__ */ new Date()).toISOString() }).select().maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
       content: [{ type: "text", text: `Logged \u20B9${amount} from ${source}.` }],
@@ -149,7 +149,7 @@ import { createClient as createClient5 } from "npm:@supabase/supabase-js@^2.98.0
 import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z3 } from "npm:zod@^3.25.76";
 function sb5(ctx) {
-  return createClient5(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+  return createClient5(process.env.SUPABASE_URL, (process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY), {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
@@ -160,14 +160,14 @@ var log_expense_default = defineTool5({
   description: "Record a new expense (in rupees) for the signed-in user.",
   inputSchema: {
     amount: z3.number().positive().describe("Amount in rupees."),
-    category: z3.string().trim().min(1).describe("Expense category, e.g. 'Food', 'Fuel', 'Rent'."),
+    category: z3.string().trim().min(1).describe("Expense category: food, transport, rent, medical, education, shopping, utilities or other."),
     note: z3.string().optional(),
     date: z3.string().datetime().optional().describe("ISO timestamp. Defaults to now.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ amount, category, note, date }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const { data, error } = await sb5(ctx).from("expenses").insert({ user_id: ctx.getUserId(), amount, category, note: note ?? null, date: date ?? (/* @__PURE__ */ new Date()).toISOString() }).select().maybeSingle();
+    const { data, error } = await sb5(ctx).from("expenses").insert({ user_id: ctx.getUserId(), amount: Math.round(amount), category: (["food","transport","rent","medical","education","shopping","utilities"].includes(category.toLowerCase()) ? category.toLowerCase() : "other"), note: note ?? (["food","transport","rent","medical","education","shopping","utilities"].includes(category.toLowerCase()) ? null : category), date: date ?? (/* @__PURE__ */ new Date()).toISOString() }).select().maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
       content: [{ type: "text", text: `Logged \u20B9${amount} expense on ${category}.` }],
@@ -180,7 +180,7 @@ var log_expense_default = defineTool5({
 import { createClient as createClient6 } from "npm:@supabase/supabase-js@^2.98.0";
 import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.20.0";
 function sb6(ctx) {
-  return createClient6(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+  return createClient6(process.env.SUPABASE_URL, (process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY), {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
@@ -200,14 +200,13 @@ var list_loans_default = defineTool6({
 });
 
 // src/lib/mcp/index.ts
-var projectRef = "pkgcgzrehvlzdsxbzaqp";
 var mcp_default = defineMcp({
   name: "rozanapay-mcp",
   title: "RozanaPay",
   version: "0.1.0",
   instructions: "Financial tools for RozanaPay users (gig workers in India). Read the signed-in user's income, expenses, savings, loans and credit score, and log new income or expense entries. All amounts are in Indian rupees.",
   auth: auth.oauth.issuer({
-    issuer: `https://${projectRef}.supabase.co/auth/v1`,
+    issuer: `${process.env.SUPABASE_URL}/auth/v1`,
     acceptedAudiences: "authenticated"
   }),
   tools: [get_profile_default, get_summary_default, list_income_default, log_income_default, log_expense_default, list_loans_default]

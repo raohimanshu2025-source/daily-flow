@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Phone, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -74,8 +73,10 @@ export default function PhoneLogin() {
 
   const handleGoogleLogin = async () => {
     const redirectUri = safeNext ? window.location.origin + safeNext : window.location.origin;
-    const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: redirectUri });
-    if (error) toast.error(error.message);
+    // Standard Supabase Google sign-in (works on any host once the Google
+    // provider is enabled in Supabase Auth settings).
+    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectUri } });
+    if (error) toast.error(error.message.includes("not enabled") ? "Google sign-in isn't available yet — please use email." : error.message);
   };
 
   return (

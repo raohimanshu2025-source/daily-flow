@@ -6,7 +6,6 @@ import logIncome from "./tools/log-income";
 import logExpense from "./tools/log-expense";
 import listLoans from "./tools/list-loans";
 
-const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset";
 
 export default defineMcp({
   name: "rozanapay-mcp",
@@ -15,7 +14,7 @@ export default defineMcp({
   instructions:
     "Financial tools for RozanaPay users (gig workers in India). Read the signed-in user's income, expenses, savings, loans and credit score, and log new income or expense entries. All amounts are in Indian rupees.",
   auth: auth.oauth.issuer({
-    issuer: `https://${projectRef}.supabase.co/auth/v1`,
+    issuer: `${process.env.SUPABASE_URL}/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
   tools: [getProfile, getSummary, listIncome, logIncome, logExpense, listLoans],

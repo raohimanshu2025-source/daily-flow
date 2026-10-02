@@ -184,6 +184,9 @@ export default function Loans() {
     pending: { icon: Clock, label: "Pending", className: "bg-warning/10 text-warning" },
     approved: { icon: CheckCircle, label: "Approved", className: "bg-success/10 text-success" },
     active: { icon: CreditCard, label: "Active", className: "bg-primary/10 text-primary" },
+    disbursed: { icon: CreditCard, label: "Active", className: "bg-primary/10 text-primary" },
+    rejected: { icon: AlertCircle, label: "Rejected", className: "bg-muted text-muted-foreground" },
+    closed: { icon: CheckCircle, label: "Closed", className: "bg-success/10 text-success" },
     repaid: { icon: CheckCircle, label: "Repaid", className: "bg-success/10 text-success" },
     overdue: { icon: AlertCircle, label: "Overdue", className: "bg-destructive/10 text-destructive" },
   };
@@ -230,7 +233,7 @@ export default function Loans() {
                   <span>{loan.duration} days · {loan.interest_rate}% interest</span>
                   <span>Applied {new Date(loan.applied_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                 </div>
-                {loan.status === "active" && (
+                {['active','disbursed','overdue'].includes(loan.status || '') && (
                   <div className="mt-3">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="text-muted-foreground">Repaid</span>
@@ -241,7 +244,7 @@ export default function Loans() {
                     </div>
                   </div>
                 )}
-                {['active','approved','disbursed'].includes(loan.status || '') && (
+                {['active','disbursed','overdue'].includes(loan.status || '') && (
                   <button
                     onClick={() => setRepayLoanId(loan.id)}
                     className="mt-3 w-full py-2 rounded-lg bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition"

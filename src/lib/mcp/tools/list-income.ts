@@ -3,7 +3,7 @@ import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 
 function sb(ctx: ToolContext) {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+  return createClient(process.env.SUPABASE_URL!, (process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY)!, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -23,7 +23,7 @@ export default defineTool({
     const since = new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await sb(ctx)
       .from("income_logs")
-      .select("id, amount, source, note, date, created_at")
+      .select("id, amount, source, payment_type, date, created_at")
       .gte("date", since)
       .order("date", { ascending: false });
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };

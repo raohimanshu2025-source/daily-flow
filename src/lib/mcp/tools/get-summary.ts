@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 
 function sb(ctx: ToolContext) {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+  return createClient(process.env.SUPABASE_URL!, (process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY)!, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -22,8 +22,8 @@ export default defineTool({
     const [incomeRes, expRes, savRes, loansRes, profRes] = await Promise.all([
       client.from("income_logs").select("amount").gte("date", since),
       client.from("expenses").select("amount").gte("date", since),
-      client.from("savings_goals").select("current_amount, target_amount, title"),
-      client.from("loans").select("id, amount, status, due_date").in("status", ["disbursed", "approved", "pending"]),
+      client.from("savings_goals").select("current_amount, target_amount, name"),
+      client.from("loans").select("id, amount, status, due_date").in("status", ["pending", "approved", "disbursed", "active", "overdue"]),
       client.from("profiles").select("credit_score, kyc_status").eq("user_id", ctx.getUserId()).maybeSingle(),
     ]);
 

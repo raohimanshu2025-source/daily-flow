@@ -177,7 +177,7 @@ export function useLoanLedger(loanId: string | null) {
         .from('loan_ledger')
         .select('*')
         .eq('loan_id', loanId!)
-        .order('posted_at', { ascending: false });
+        .order('seq' as any, { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -190,26 +190,14 @@ export function useRepayLoan() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ loanId, amount, referenceId }: { loanId: string; amount: number; referenceId?: string }) => {
-      const { data, error } = await supabase.rpc('post_loan_entry', {
+      // The server records the repayment in the ledger and updates the loan's
+      // repaid amount and status itself; the app no longer writes those fields.
+      const { data, error } = await supabase.rpc('repay_loan' as any, {
         _loan_id: loanId,
-        _entry_type: 'repayment',
         _amount_paise: Math.round(amount * 100),
-        _description: 'Repayment via UPI',
         _reference_id: referenceId ?? null,
       });
       if (error) throw error;
-      // Update the loan repaid_amount field for UI progress bar
-      const { data: loan } = await supabase.from('loans').select('repaid_amount, amount').eq('id', loanId).single();
-      if (loan) {
-        const newRepaid = Math.min(loan.repaid_amount + amount, loan.amount);
-        const status = newRepaid >= loan.amount ? 'repaid' : undefined;
-        // Note: status change may be blocked by prevent_protected_column_update trigger for non-admins; only update repaid_amount here.
-        await supabase.from('loans').update({ repaid_amount: newRepaid }).eq('id', loanId);
-        if (status === 'repaid') {
-          // Silent attempt; ignored if not permitted
-          await supabase.from('loans').update({ status: 'repaid' } as any).eq('id', loanId);
-        }
-      }
       await supabase.from('transactions').insert({
         user_id: user!.id, type: 'loan', amount, description: `Loan repayment ₹${amount}`, status: 'completed',
       });

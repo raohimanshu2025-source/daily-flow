@@ -3,7 +3,7 @@ import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 
 function sb(ctx: ToolContext) {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+  return createClient(process.env.SUPABASE_URL!, (process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY)!, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -15,7 +15,7 @@ export default defineTool({
   description: "Record a new expense (in rupees) for the signed-in user.",
   inputSchema: {
     amount: z.number().positive().describe("Amount in rupees."),
-    category: z.string().trim().min(1).describe("Expense category, e.g. 'Food', 'Fuel', 'Rent'."),
+    category: z.string().trim().min(1).describe("Expense category: food, transport, rent, medical, education, shopping, utilities or other."),
     note: z.string().optional(),
     date: z.string().datetime().optional().describe("ISO timestamp. Defaults to now."),
   },
@@ -24,7 +24,7 @@ export default defineTool({
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     const { data, error } = await sb(ctx)
       .from("expenses")
-      .insert({ user_id: ctx.getUserId(), amount, category, note: note ?? null, date: date ?? new Date().toISOString() })
+      .insert({ user_id: ctx.getUserId(), amount: Math.round(amount), category: (["food","transport","rent","medical","education","shopping","utilities"].includes(category.toLowerCase()) ? category.toLowerCase() : "other"), note: note ?? (["food","transport","rent","medical","education","shopping","utilities"].includes(category.toLowerCase()) ? null : category), date: date ?? new Date().toISOString() })
       .select()
       .maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
