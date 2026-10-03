@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       });
     }
     const AI_BASE_URL = Deno.env.get("AI_BASE_URL") ?? "https://generativelanguage.googleapis.com/v1beta/openai";
-    const AI_MODEL = Deno.env.get("AI_MODEL") ?? "gemini-2.5-flash";
+    const AI_MODEL = Deno.env.get("AI_MODEL") ?? "gemini-3.8-flash";
 
     const totalIncome = userData.income.reduce((s: number, i: any) => s + i.amount, 0);
     const totalExpenses = userData.expenses.reduce((s: number, e: any) => s + e.amount, 0);
@@ -121,6 +121,7 @@ Return JSON array with exactly 5 nudges.`;
       const status = response.status;
       if (status === 429) return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (status === 402) return new Response(JSON.stringify({ error: "Credits exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.error("AI provider error:", status, await response.text());
       throw new Error("AI request failed");
     }
 

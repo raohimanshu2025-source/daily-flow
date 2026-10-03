@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("AI_API_KEY");
     if (!apiKey) return json({ error: "The assistant isn't set up yet. Please try again later." }, 503);
     const baseUrl = Deno.env.get("AI_BASE_URL") ?? "https://generativelanguage.googleapis.com/v1beta/openai";
-    const model = Deno.env.get("AI_MODEL") ?? "gemini-2.5-flash";
+    const model = Deno.env.get("AI_MODEL") ?? "gemini-3.8-flash";
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
