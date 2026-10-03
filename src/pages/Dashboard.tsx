@@ -3,7 +3,9 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile, useIncomeLogs, useSavingsGoals, useLoans, useTransactions, useNotifications } from "@/hooks/use-cloud-data";
 import MobileLayout from "@/components/MobileLayout";
-import { Plus, PiggyBank, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid, Moon, Sun, Minus, LogOut, ChevronRight, Wallet, Zap } from "lucide-react";
+import { Plus, PiggyBank, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid, Moon, Sun, Minus, LogOut, ChevronRight, Wallet, Zap, Mic } from "lucide-react";
+import { useState } from "react";
+import VoiceLogSheet from "@/components/VoiceLogSheet";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/hooks/use-language";
 import { useTheme } from "@/hooks/use-theme";
@@ -28,9 +30,11 @@ export default function Dashboard() {
   const todayStr = new Date().toISOString().split('T')[0];
   const todayIncome = incomes.filter(i => i.date.startsWith(todayStr)).reduce((s, i) => s + i.amount, 0);
   const totalSavings = savings.reduce((s, g) => s + g.current_amount, 0);
-  const activeLoans = loans.filter(l => ['approved', 'active', 'pending'].includes(l.status || ''));
+  // Loans that have paid out and still count as owed (pending applications are not active loans).
+  const activeLoans = loans.filter(l => ['disbursed', 'active', 'overdue'].includes(l.status || ''));
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
-  const totalLoanBorrowed = loans.filter(l => ['approved', 'active'].includes(l.status || '')).reduce((s, l) => s + l.amount, 0);
+  const totalLoanBorrowed = loans.filter(l => ['disbursed', 'active', 'overdue', 'repaid', 'closed'].includes(l.status || '')).reduce((s, l) => s + l.amount, 0);
   const totalLoanRepaid = loans.reduce((s, l) => s + l.repaid_amount, 0);
   const balance = totalIncome - totalSavings - totalLoanRepaid + totalLoanBorrowed;
   const unreadNotifs = notifications.filter(n => !n.read).length;
@@ -150,6 +154,24 @@ export default function Dashboard() {
             </motion.button>
           ))}
         </motion.div>
+
+        {/* Voice logging */}
+        <motion.button
+          variants={fadeUp}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setVoiceOpen(true)}
+          className="w-full mb-5 flex items-center gap-3 bg-card rounded-2xl p-3.5 shadow-card border border-primary/20 text-left"
+        >
+          <div className="w-11 h-11 rounded-xl gradient-hero flex items-center justify-center shadow-glow shrink-0">
+            <Mic className="h-5 w-5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-extrabold text-foreground">{t('voice.cta')}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{t('voice.ctaHint')}</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+        </motion.button>
+        <VoiceLogSheet open={voiceOpen} onClose={() => setVoiceOpen(false)} />
 
         {/* Stats Row - Credit Score + Active Loans */}
         <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3 mb-5">

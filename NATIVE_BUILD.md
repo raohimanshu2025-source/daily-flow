@@ -48,4 +48,4 @@ npx cap open android
 - [ ] Replace "Lender: not yet assigned" in the KFS (`kfs.lender` in `src/lib/i18n.ts`) with the real NBFC partner name + RBI registration number
 - [x] Privacy Policy + Terms public URLs (https://rozanapay.netlify.app/privacy, /terms)
 - [ ] Data Safety form in Play Console (we collect: phone, name, KYC docs, financial txns)
-- [ ] Sensitive permissions justification (none currently requested beyond INTERNET)
+- [ ] Sensitive permissions justification: `RECORD_AUDIO` is needed for voice logging ("Speak to log"). After `npx cap add android`, add `<uses-permission android:name="android.permission.RECORD_AUDIO" />` and `<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />` to `android/app/src/main/AndroidManifest.xml`, and declare microphone use in the Play Console Data Safety form (audio is sent to Google Gemini to understand the entry, not stored).
