@@ -1,0 +1,203 @@
+{
+  "users": 3000,
+  "weeks_forecast": 18,
+  "target_coverage": 0.8,
+  "floor": 0.25,
+  "methods": {
+    "last7": {
+      "wape": 0.3612478854233447,
+      "bias": -0.0006061626866684321,
+      "pop_cv": 0.3016450004968457,
+      "rules": {
+        "fixed": {
+          "param": 0.308,
+          "coverage": 0.7998888888888889,
+          "pinball": 460.9079998518519,
+          "users_below_60pct": 0.007
+        },
+        "user_cv": {
+          "param": 1.03,
+          "coverage": 0.7999259259259259,
+          "pinball": 475.00749536518134,
+          "users_below_60pct": 0.001
+        },
+        "shrunk_cv": {
+          "param": 1.006,
+          "coverage": 0.8001481481481482,
+          "pinball": 460.85715469339164,
+          "users_below_60pct": 0.0006666666666666666
+        }
+      }
+    },
+    "mean28": {
+      "wape": 0.2888877458709749,
+      "bias": -0.000702870407498131,
+      "pop_cv": 0.3016450004968457,
+      "rules": {
+        "fixed": {
+          "param": 0.27,
+          "coverage": 0.8001296296296296,
+          "pinball": 414.2732539814815,
+          "users_below_60pct": 0.009666666666666667
+        },
+        "user_cv": {
+          "param": 0.926,
+          "coverage": 0.8,
+          "pinball": 437.44495195594004,
+          "users_below_60pct": 0.001
+        },
+        "shrunk_cv": {
+          "param": 0.89,
+          "coverage": 0.7998888888888889,
+          "pinball": 420.52557188288847,
+          "users_below_60pct": 0.0026666666666666666
+        }
+      }
+    },
+    "ewm2": {
+      "wape": 0.2812087118438093,
+      "bias": -0.00097633820844421,
+      "pop_cv": 0.3016450004968457,
+      "rules": {
+        "fixed": {
+          "param": 0.264,
+          "coverage": 0.7998703703703703,
+          "pinball": 409.2694440314519,
+          "users_below_60pct": 0.01
+        },
+        "user_cv": {
+          "param": 0.912,
+          "coverage": 0.8000185185185186,
+          "pinball": 433.6591244414178,
+          "users_below_60pct": 0.0003333333333333333
+        },
+        "shrunk_cv": {
+          "param": 0.876,
+          "coverage": 0.7999074074074074,
+          "pinball": 416.46043149875953,
+          "users_below_60pct": 0.0033333333333333335
+        }
+      }
+    },
+    "ewm4": {
+      "wape": 0.27558771546500704,
+      "bias": -0.0011859071771392093,
+      "pop_cv": 0.3016450004968457,
+      "rules": {
+        "fixed": {
+          "param": 0.261,
+          "coverage": 0.800074074074074,
+          "pinball": 405.82005691310763,
+          "users_below_60pct": 0.011
+        },
+        "user_cv": {
+          "param": 0.906,
+          "coverage": 0.7999074074074074,
+          "pinball": 431.1090992156125,
+          "users_below_60pct": 0.0016666666666666668
+        },
+        "shrunk_cv": {
+          "param": 0.868,
+          "coverage": 0.8000185185185186,
+          "pinball": 413.62301588281247,
+          "users_below_60pct": 0.0036666666666666666
+        }
+      }
+    },
+    "ewm6": {
+      "wape": 0.27460569974232935,
+      "bias": -0.0012735228867697805,
+      "pop_cv": 0.3016450004968457,
+      "rules": {
+        "fixed": {
+          "param": 0.262,
+          "coverage": 0.8002222222222222,
+          "pinball": 405.20758459085624,
+          "users_below_60pct": 0.011
+        },
+        "user_cv": {
+          "param": 0.905,
+          "coverage": 0.800074074074074,
+          "pinball": 430.7336623691583,
+          "users_below_60pct": 0.003
+        },
+        "shrunk_cv": {
+          "param": 0.866,
+          "coverage": 0.8001481481481482,
+          "pinball": 413.1829843560967,
+          "users_below_60pct": 0.003
+        }
+      }
+    },
+    "ewm8": {
+      "wape": 0.27432668253940906,
+      "bias": -0.001320174609829687,
+      "pop_cv": 0.3016450004968457,
+      "rules": {
+        "fixed": {
+          "param": 0.261,
+          "coverage": 0.7996851851851852,
+          "pinball": 405.0517633545889,
+          "users_below_60pct": 0.011333333333333334
+        },
+        "user_cv": {
+          "param": 0.903,
+          "coverage": 0.8,
+          "pinball": 430.592584957589,
+          "users_below_60pct": 0.0026666666666666666
+        },
+        "shrunk_cv": {
+          "param": 0.865,
+          "coverage": 0.7999074074074074,
+          "pinball": 413.0727974350542,
+          "users_below_60pct": 0.003
+        }
+      }
+    }
+  },
+  "chosen": {
+    "method": "ewm4",
+    "half_life_weeks": 4,
+    "shrink_k": 2,
+    "cautious_rule": "shrunk_cv",
+    "z": 0.868,
+    "pop_cv": 0.3,
+    "floor": 0.25,
+    "param": 0.868,
+    "coverage": 0.8000185185185186,
+    "pinball": 413.62301588281247,
+    "users_below_60pct": 0.0036666666666666666
+  },
+  "chosen_coverage_by_work": {
+    "delivery": 0.8089249708160883,
+    "construction": 0.7684804145709495,
+    "vendor": 0.8175105485232067,
+    "driver": 0.8016141141141141
+  },
+  "z_by_history_weeks": {
+    "2": {
+      "z": 1.152,
+      "coverage": 0.800037037037037,
+      "coverage_with_8wk_z": 0.7449259259259259,
+      "wape": 0.31402491139256755
+    },
+    "3": {
+      "z": 1.014,
+      "coverage": 0.800074074074074,
+      "coverage_with_8wk_z": 0.7677037037037037,
+      "wape": 0.2977530920686978
+    },
+    "4": {
+      "z": 0.956,
+      "coverage": 0.800037037037037,
+      "coverage_with_8wk_z": 0.7805925925925926,
+      "wape": 0.28886881815658305
+    },
+    "8": {
+      "z": 0.861,
+      "coverage": 0.8,
+      "coverage_with_8wk_z": 0.8017037037037037,
+      "wape": 0.27513616154934517
+    }
+  }
+}

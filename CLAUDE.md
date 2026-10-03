@@ -55,6 +55,8 @@ Users have low digital literacy: big tap targets, little text, Hindi + English t
 - Nightly pg_cron jobs: `run_daily_loan_charges()` (interest only after disbursal; late fee capped by `app_settings.late_fee_cap_pct`) and `recompute_all_credit_scores()`.
 - Trusted SQL functions bypass protected-column guards with `set_config('rozanapay.internal','on',true)`; never use `session_replication_role`.
 - Credit score = ML scorecard (`scorecard-v1`, logistic regression on WoE bins) in `public.scorecard_bins`, active version in `app_settings.credit_model_version`. Pipeline + model card in `ml/credit-model/` (trained on SYNTHETIC data — retrain on real outcomes before real lending). Feature names in `compute_credit_score` must match `ml/credit-model/generate_data.py`.
+- Safe to spend (`/safe-to-spend`, dashboard card): next-7-day income forecast in `src/lib/forecast.ts` (weighted weekday profile + calibrated careful estimate), method chosen by backtest in `ml/cashflow-forecast/` (simulated data; see its MODEL_CARD). Python/TS parity tests there.
+- Govt benefits finder (`/benefits`): on-device eligibility rules in `src/lib/benefits.ts`; re-check schemes and bump `BENEFITS_CHECKED_ON`.
 - AI functions (`chat`, `smart-nudges`) need the `AI_API_KEY` secret (any OpenAI-compatible API; defaults to Gemini). `chat` requires a signed-in user's token.
 
 ## Rules

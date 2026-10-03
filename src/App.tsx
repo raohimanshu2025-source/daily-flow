@@ -21,6 +21,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import LegalPage from "./pages/LegalPage";
 import Services from "./pages/Services";
 import Benefits from "./pages/Benefits";
+import SafeToSpend from "./pages/SafeToSpend";
 import UpiQr from "./pages/UpiQr";
 import Bnpl from "./pages/Bnpl";
 import DigitalGold from "./pages/DigitalGold";
@@ -78,6 +79,7 @@ function AppRoutes() {
       <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+      <Route path="/safe-to-spend" element={<ProtectedRoute><SafeToSpend /></ProtectedRoute>} />
       <Route path="/benefits" element={<ProtectedRoute><Benefits /></ProtectedRoute>} />
       <Route path="/upi-qr" element={<ProtectedRoute><UpiQr /></ProtectedRoute>} />
       <Route path="/bnpl" element={<ProtectedRoute><Bnpl /></ProtectedRoute>} />

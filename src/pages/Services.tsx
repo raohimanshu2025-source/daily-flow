@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import MobileLayout from "@/components/MobileLayout";
-import { QrCode, ShoppingBag, Coins, Shield, Gift, Smartphone, MessageCircle, Users, Award, Brain, Receipt, LifeBuoy, Landmark } from "lucide-react";
+import { QrCode, ShoppingBag, Coins, Shield, Gift, Smartphone, MessageCircle, Users, Award, Brain, Receipt, LifeBuoy, Landmark, Wallet } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/hooks/use-language";
 
 const services = [
+  { icon: Wallet, label: "sts.service", desc: "sts.serviceDesc", path: "/safe-to-spend", color: "bg-success/10 text-success" },
   { icon: Landmark, label: "ben.service", desc: "ben.serviceDesc", path: "/benefits", color: "bg-success/10 text-success" },
   { icon: QrCode, label: "UPI QR Pay", desc: "Receive payments via QR", path: "/upi-qr", color: "bg-primary/10 text-primary" },
   { icon: ShoppingBag, label: "Buy Now Pay Later", desc: "Essentials on credit", path: "/bnpl", color: "bg-warning/10 text-warning" },

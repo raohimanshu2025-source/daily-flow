@@ -5,6 +5,7 @@ import { useProfile, useIncomeLogs, useSavingsGoals, useLoans, useTransactions, 
 import MobileLayout from "@/components/MobileLayout";
 import { Plus, PiggyBank, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid, Moon, Sun, Minus, LogOut, ChevronRight, Wallet, Zap, Mic } from "lucide-react";
 import { useState } from "react";
+import { useSafeToSpend } from "@/hooks/use-safe-to-spend";
 import VoiceLogSheet from "@/components/VoiceLogSheet";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/hooks/use-language";
@@ -33,6 +34,7 @@ export default function Dashboard() {
   // Loans that have paid out and still count as owed (pending applications are not active loans).
   const activeLoans = loans.filter(l => ['disbursed', 'active', 'overdue'].includes(l.status || ''));
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const { data: safe } = useSafeToSpend();
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
   const totalLoanBorrowed = loans.filter(l => ['disbursed', 'active', 'overdue', 'repaid', 'closed'].includes(l.status || '')).reduce((s, l) => s + l.amount, 0);
   const totalLoanRepaid = loans.reduce((s, l) => s + l.repaid_amount, 0);
@@ -172,6 +174,39 @@ export default function Dashboard() {
           <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
         </motion.button>
         <VoiceLogSheet open={voiceOpen} onClose={() => setVoiceOpen(false)} />
+
+        {/* Safe to spend (income forecast) */}
+        {safe && (
+          <motion.button
+            variants={fadeUp}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/safe-to-spend")}
+            className="w-full mb-5 flex items-center gap-3 bg-card rounded-2xl p-3.5 shadow-card border border-success/20 text-left"
+          >
+            <div className="w-11 h-11 rounded-xl gradient-success flex items-center justify-center shadow-glow shrink-0">
+              <Wallet className="h-5 w-5 text-white" />
+            </div>
+            <div className="min-w-0">
+              {safe.ready ? (
+                <>
+                  <p className="text-[11px] text-muted-foreground font-semibold">{t('sts.dashLabel')}</p>
+                  <p className={`text-lg font-black leading-tight ${safe.spare < 0 ? "text-destructive" : "text-success"}`}>
+                    ₹{safe.perDay.toLocaleString("en-IN")}
+                    {safe.spare < 0 && <span className="text-xs font-bold ml-2">{t('sts.tight')}</span>}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-extrabold text-foreground">{t('sts.title')}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {safe.daysNeeded > 0 ? t('sts.dashLocked').replace('{n}', String(safe.daysNeeded)) : t('sts.dashLockedLogs')}
+                  </p>
+                </>
+              )}
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+          </motion.button>
+        )}
 
         {/* Stats Row - Credit Score + Active Loans */}
         <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3 mb-5">
