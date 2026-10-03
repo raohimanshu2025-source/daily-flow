@@ -1,0 +1,507 @@
+{
+  "model_version": "scorecard-v1",
+  "trained_on": "synthetic data (see generate_data.py) — retrain on real outcomes before real lending",
+  "scaling": {
+    "base_score": 700,
+    "base_odds_good_bad": 49.0,
+    "pdo": 50,
+    "min_score": 300,
+    "max_score": 900
+  },
+  "bands": [
+    {
+      "min": 800,
+      "band": "excellent"
+    },
+    {
+      "min": 700,
+      "band": "good"
+    },
+    {
+      "min": 600,
+      "band": "fair"
+    },
+    {
+      "min": 500,
+      "band": "poor"
+    },
+    {
+      "min": 300,
+      "band": "very_poor"
+    }
+  ],
+  "features": [
+    {
+      "feature": "income_days_30",
+      "label": "Days with income (30d)",
+      "coef": -0.6018,
+      "iv": 0.6459,
+      "bins": [
+        {
+          "min": null,
+          "max": 8,
+          "woe": -1.0127,
+          "share": 0.0791,
+          "default_rate": 0.2481,
+          "points": 20
+        },
+        {
+          "min": 8,
+          "max": 11,
+          "woe": -0.8523,
+          "share": 0.102,
+          "default_rate": 0.2194,
+          "points": 27
+        },
+        {
+          "min": 11,
+          "max": 13,
+          "woe": -0.5113,
+          "share": 0.0979,
+          "default_rate": 0.1665,
+          "points": 41
+        },
+        {
+          "min": 13,
+          "max": 15,
+          "woe": -0.2092,
+          "share": 0.1199,
+          "default_rate": 0.1287,
+          "points": 55
+        },
+        {
+          "min": 15,
+          "max": 16,
+          "woe": -0.0267,
+          "share": 0.0626,
+          "default_rate": 0.1095,
+          "points": 63
+        },
+        {
+          "min": 16,
+          "max": 18,
+          "woe": 0.239,
+          "share": 0.1295,
+          "default_rate": 0.0862,
+          "points": 74
+        },
+        {
+          "min": 18,
+          "max": 19,
+          "woe": 0.6246,
+          "share": 0.0653,
+          "default_rate": 0.0602,
+          "points": 91
+        },
+        {
+          "min": 19,
+          "max": 21,
+          "woe": 0.8746,
+          "share": 0.1212,
+          "default_rate": 0.0475,
+          "points": 102
+        },
+        {
+          "min": 21,
+          "max": 23,
+          "woe": 1.3422,
+          "share": 0.1015,
+          "default_rate": 0.0303,
+          "points": 122
+        },
+        {
+          "min": 23,
+          "max": null,
+          "woe": 1.7136,
+          "share": 0.121,
+          "default_rate": 0.0211,
+          "points": 138
+        }
+      ]
+    },
+    {
+      "feature": "income_total_30",
+      "label": "Income earned (30d)",
+      "coef": -0.054,
+      "iv": 0.2204,
+      "bins": [
+        {
+          "min": null,
+          "max": 3300,
+          "woe": -0.7955,
+          "share": 0.0974,
+          "default_rate": 0.2098,
+          "points": 61
+        },
+        {
+          "min": 3300,
+          "max": 4700,
+          "woe": -0.4748,
+          "share": 0.1015,
+          "default_rate": 0.1615,
+          "points": 62
+        },
+        {
+          "min": 4700,
+          "max": 5900,
+          "woe": -0.2523,
+          "share": 0.1007,
+          "default_rate": 0.1336,
+          "points": 63
+        },
+        {
+          "min": 5900,
+          "max": 7100,
+          "woe": -0.0329,
+          "share": 0.1003,
+          "default_rate": 0.1102,
+          "points": 64
+        },
+        {
+          "min": 7100,
+          "max": 8400,
+          "woe": 0.0707,
+          "share": 0.1008,
+          "default_rate": 0.1004,
+          "points": 64
+        },
+        {
+          "min": 8400,
+          "max": 9800,
+          "woe": 0.1953,
+          "share": 0.0972,
+          "default_rate": 0.0897,
+          "points": 64
+        },
+        {
+          "min": 9800,
+          "max": 12000,
+          "woe": 0.2958,
+          "share": 0.1179,
+          "default_rate": 0.0818,
+          "points": 65
+        },
+        {
+          "min": 12000,
+          "max": 14000,
+          "woe": 0.4306,
+          "share": 0.0805,
+          "default_rate": 0.0722,
+          "points": 65
+        },
+        {
+          "min": 14000,
+          "max": 18000,
+          "woe": 0.6196,
+          "share": 0.098,
+          "default_rate": 0.0605,
+          "points": 66
+        },
+        {
+          "min": 18000,
+          "max": null,
+          "woe": 0.7764,
+          "share": 0.1059,
+          "default_rate": 0.0522,
+          "points": 67
+        }
+      ]
+    },
+    {
+      "feature": "active_weeks_12",
+      "label": "Active weeks (12w)",
+      "coef": -0.2299,
+      "iv": 0.2995,
+      "bins": [
+        {
+          "min": null,
+          "max": 2,
+          "woe": -0.5527,
+          "share": 0.0727,
+          "default_rate": 0.1723,
+          "points": 55
+        },
+        {
+          "min": 2,
+          "max": 3,
+          "woe": -0.4396,
+          "share": 0.078,
+          "default_rate": 0.1568,
+          "points": 56
+        },
+        {
+          "min": 3,
+          "max": 5,
+          "woe": -0.411,
+          "share": 0.1933,
+          "default_rate": 0.1531,
+          "points": 57
+        },
+        {
+          "min": 5,
+          "max": 6,
+          "woe": -0.2618,
+          "share": 0.1124,
+          "default_rate": 0.1347,
+          "points": 59
+        },
+        {
+          "min": 6,
+          "max": 7,
+          "woe": -0.0182,
+          "share": 0.1176,
+          "default_rate": 0.1087,
+          "points": 63
+        },
+        {
+          "min": 7,
+          "max": 8,
+          "woe": 0.179,
+          "share": 0.1151,
+          "default_rate": 0.091,
+          "points": 67
+        },
+        {
+          "min": 8,
+          "max": 9,
+          "woe": 0.5685,
+          "share": 0.1061,
+          "default_rate": 0.0635,
+          "points": 73
+        },
+        {
+          "min": 9,
+          "max": 10,
+          "woe": 0.931,
+          "share": 0.0905,
+          "default_rate": 0.045,
+          "points": 79
+        },
+        {
+          "min": 10,
+          "max": null,
+          "woe": 1.3314,
+          "share": 0.1144,
+          "default_rate": 0.0306,
+          "points": 86
+        }
+      ]
+    },
+    {
+      "feature": "expense_ratio_30",
+      "label": "Spending vs income (30d)",
+      "coef": -0.6469,
+      "iv": 0.4698,
+      "bins": [
+        {
+          "min": null,
+          "max": 0.51,
+          "woe": 1.1698,
+          "share": 0.1031,
+          "default_rate": 0.0358,
+          "points": 118
+        },
+        {
+          "min": 0.51,
+          "max": 0.6,
+          "woe": 0.8185,
+          "share": 0.096,
+          "default_rate": 0.0501,
+          "points": 102
+        },
+        {
+          "min": 0.6,
+          "max": 0.67,
+          "woe": 0.5856,
+          "share": 0.1033,
+          "default_rate": 0.0625,
+          "points": 91
+        },
+        {
+          "min": 0.67,
+          "max": 0.73,
+          "woe": 0.5017,
+          "share": 0.1029,
+          "default_rate": 0.0676,
+          "points": 87
+        },
+        {
+          "min": 0.73,
+          "max": 0.78,
+          "woe": 0.4272,
+          "share": 0.091,
+          "default_rate": 0.0724,
+          "points": 84
+        },
+        {
+          "min": 0.78,
+          "max": 0.84,
+          "woe": 0.2292,
+          "share": 0.1106,
+          "default_rate": 0.087,
+          "points": 74
+        },
+        {
+          "min": 0.84,
+          "max": 0.9,
+          "woe": 0.0532,
+          "share": 0.1004,
+          "default_rate": 0.102,
+          "points": 66
+        },
+        {
+          "min": 0.9,
+          "max": 0.96,
+          "woe": -0.1129,
+          "share": 0.09,
+          "default_rate": 0.1183,
+          "points": 58
+        },
+        {
+          "min": 0.96,
+          "max": null,
+          "woe": -0.9526,
+          "share": 0.2027,
+          "default_rate": 0.2371,
+          "points": 19
+        }
+      ]
+    },
+    {
+      "feature": "loans_repaid_on_time",
+      "label": "Loans repaid on time",
+      "coef": -0.1069,
+      "iv": 0.0268,
+      "bins": [
+        {
+          "min": null,
+          "max": 1.0,
+          "woe": -0.1011,
+          "share": 0.6359,
+          "default_rate": 0.1171,
+          "points": 63
+        },
+        {
+          "min": 1.0,
+          "max": 2,
+          "woe": 0.1055,
+          "share": 0.2465,
+          "default_rate": 0.0974,
+          "points": 64
+        },
+        {
+          "min": 2,
+          "max": null,
+          "woe": 0.4176,
+          "share": 0.1176,
+          "default_rate": 0.0731,
+          "points": 67
+        }
+      ]
+    },
+    {
+      "feature": "loans_repaid_late",
+      "label": "Loans repaid late",
+      "coef": -0.4571,
+      "iv": 0.1134,
+      "bins": [
+        {
+          "min": null,
+          "max": 1.0,
+          "woe": 0.1547,
+          "share": 0.8704,
+          "default_rate": 0.0931,
+          "points": 69
+        },
+        {
+          "min": 1.0,
+          "max": null,
+          "woe": -0.7392,
+          "share": 0.1296,
+          "default_rate": 0.2007,
+          "points": 39
+        }
+      ]
+    },
+    {
+      "feature": "loans_overdue_now",
+      "label": "Loans overdue now",
+      "coef": -0.8642,
+      "iv": 0.0529,
+      "bins": [
+        {
+          "min": null,
+          "max": 1.0,
+          "woe": 0.0523,
+          "share": 0.9665,
+          "default_rate": 0.1022,
+          "points": 67
+        },
+        {
+          "min": 1.0,
+          "max": null,
+          "woe": -1.0148,
+          "share": 0.0335,
+          "default_rate": 0.2484,
+          "points": 0
+        }
+      ]
+    },
+    {
+      "feature": "bnpl_active",
+      "label": "Active BNPL orders",
+      "coef": -0.5712,
+      "iv": 0.1001,
+      "bins": [
+        {
+          "min": null,
+          "max": 1.0,
+          "woe": 0.2285,
+          "share": 0.6766,
+          "default_rate": 0.0871,
+          "points": 73
+        },
+        {
+          "min": 1.0,
+          "max": 2.0,
+          "woe": -0.2735,
+          "share": 0.2594,
+          "default_rate": 0.1361,
+          "points": 52
+        },
+        {
+          "min": 2.0,
+          "max": null,
+          "woe": -0.7391,
+          "share": 0.064,
+          "default_rate": 0.2006,
+          "points": 33
+        }
+      ]
+    },
+    {
+      "feature": "kyc_verified",
+      "label": "KYC verified",
+      "coef": -0.4871,
+      "iv": 0.1384,
+      "bins": [
+        {
+          "min": null,
+          "max": 1.0,
+          "woe": -0.303,
+          "share": 0.5307,
+          "default_rate": 0.1397,
+          "points": 53
+        },
+        {
+          "min": 1.0,
+          "max": null,
+          "woe": 0.462,
+          "share": 0.4693,
+          "default_rate": 0.0702,
+          "points": 80
+        }
+      ]
+    }
+  ]
+}

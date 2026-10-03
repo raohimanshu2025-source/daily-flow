@@ -16,23 +16,53 @@ const loanAmounts = [500, 1000, 2000, 5000, 10000];
 const loanDurations = [7, 14, 30];
 const quickRepay = [100, 500, 1000, 2000];
 
-const FACTOR_META: Record<string, { label: string; good: (v: any) => boolean; format: (v: any) => string }> = {
-  income_days_30:    { label: "Income days (30d)",  good: (v) => v >= 15,    format: (v) => `${v} days` },
-  income_total_30:   { label: "Income (30d)",        good: (v) => v >= 10000, format: (v) => `₹${Number(v).toLocaleString("en-IN")}` },
-  savings_balance:   { label: "Savings balance",     good: (v) => v >= 2000,  format: (v) => `₹${Number(v).toLocaleString("en-IN")}` },
-  loans_on_time:     { label: "On-time loans",       good: (v) => v >= 1,     format: (v) => `${v}` },
-  loans_overdue:     { label: "Overdue loans",       good: (v) => v === 0,    format: (v) => `${v}` },
-  outstanding_paise: { label: "Outstanding",         good: (v) => v === 0,    format: (v) => `₹${Math.round(Number(v) / 100).toLocaleString("en-IN")}` },
-  bnpl_active:       { label: "Active BNPL",         good: (v) => v <= 1,     format: (v) => `${v}` },
-  kyc_verified:      { label: "KYC verified",        good: (v) => v === true, format: (v) => v ? "Yes" : "No" },
-  account_age_days:  { label: "Account age",         good: (v) => v >= 30,    format: (v) => `${v} days` },
+const inr = (v: any) => `₹${Number(v).toLocaleString("en-IN")}`;
+
+// Display info for each scorecard feature (labels and tips are translated in i18n.ts).
+const FEATURE_FORMAT: Record<string, (v: any) => string> = {
+  income_days_30: (v) => `${v} ${t("score.unit.days")}`,
+  income_total_30: inr,
+  active_weeks_12: (v) => `${v}/12`,
+  expense_ratio_30: (v) => (Number(v) >= 2 ? "—" : `${Math.round(Number(v) * 100)}%`),
+  loans_repaid_on_time: (v) => `${v}`,
+  loans_repaid_late: (v) => `${v}`,
+  loans_overdue_now: (v) => `${v}`,
+  bnpl_active: (v) => `${v}`,
+  kyc_verified: (v) => (Number(v) === 1 || v === true ? t("score.yes") : t("score.no")),
 };
+
+// Older scores (rule-v1) have no per-feature points; fall back to simple thresholds.
+const LEGACY_GOOD: Record<string, (v: any) => boolean> = {
+  income_days_30: (v) => v >= 15, income_total_30: (v) => v >= 10000, bnpl_active: (v) => v <= 1,
+  kyc_verified: (v) => v === true || v === 1, loans_overdue: (v) => v === 0, loans_on_time: (v) => v >= 1,
+};
+
+type Reason = { key: string; value: any; gap: number };
+
+/** Reason codes: points lost per feature vs the best possible bin (standard adverse-action method). */
+function scoreReasons(factors: Record<string, any>): { helping: Reason[]; hurting: Reason[] } {
+  const pts = factors?.points as Record<string, number> | undefined;
+  const best = factors?.max_points as Record<string, number> | undefined;
+  if (pts && best) {
+    const rows = Object.keys(pts)
+      .filter((k) => FEATURE_FORMAT[k])
+      .map((k) => ({ key: k, value: factors[k], gap: (best[k] ?? pts[k]) - pts[k] }));
+    return {
+      helping: rows.filter((r) => r.gap <= 3).sort((a, b) => (best[b.key] ?? 0) - (best[a.key] ?? 0)).slice(0, 3),
+      hurting: rows.filter((r) => r.gap > 3).sort((a, b) => b.gap - a.gap).slice(0, 3),
+    };
+  }
+  const legacy = Object.entries(factors || {}).filter(([k]) => LEGACY_GOOD[k] && FEATURE_FORMAT[k]);
+  return {
+    helping: legacy.filter(([k, v]) => LEGACY_GOOD[k](v)).slice(0, 3).map(([k, v]) => ({ key: k, value: v, gap: 0 })),
+    hurting: legacy.filter(([k, v]) => !LEGACY_GOOD[k](v)).slice(0, 3).map(([k, v]) => ({ key: k, value: v, gap: 0 })),
+  };
+}
 
 function CreditScorePanel({ latest, recomputing, onRecompute }: { latest: any; recomputing: boolean; onRecompute: () => void }) {
   const factors = (latest?.factors || {}) as Record<string, any>;
-  const entries = Object.entries(factors).filter(([k]) => FACTOR_META[k]);
-  const positives = entries.filter(([k, v]) => FACTOR_META[k].good(v)).slice(0, 3);
-  const negatives = entries.filter(([k, v]) => !FACTOR_META[k].good(v)).slice(0, 3);
+  const { helping: positives, hurting: negatives } = scoreReasons(factors);
+  const hasReasons = positives.length + negatives.length > 0;
   const bandColor: Record<string, string> = {
     excellent: "bg-success/10 text-success",
     good: "bg-success/10 text-success",
@@ -44,19 +74,19 @@ function CreditScorePanel({ latest, recomputing, onRecompute }: { latest: any; r
     <div className="bg-card rounded-2xl p-4 mb-6 shadow-card">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <p className="text-xs text-muted-foreground">Score breakdown</p>
+          <p className="text-xs text-muted-foreground">{t("score.breakdown")}</p>
           {latest ? (
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-base font-bold text-foreground">{latest.score}</span>
               <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase ${bandColor[latest.band] || "bg-muted text-muted-foreground"}`}>
-                {String(latest.band).replace("_", " ")}
+                {t(`score.band.${latest.band}`)}
               </span>
               <span className="text-[10px] text-muted-foreground">
                 {new Date(latest.computed_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
               </span>
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground mt-0.5">Not computed yet</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t("score.notYet")}</p>
           )}
         </div>
         <button
@@ -65,23 +95,23 @@ function CreditScorePanel({ latest, recomputing, onRecompute }: { latest: any; r
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-xs font-semibold text-foreground active:scale-95 transition disabled:opacity-40"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${recomputing ? "animate-spin" : ""}`} />
-          {recomputing ? "Updating..." : "Recompute"}
+          {recomputing ? t("score.updating") : t("score.recompute")}
         </button>
       </div>
 
-      {entries.length > 0 && (
+      {hasReasons && (
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="flex items-center gap-1 mb-1.5">
               <TrendingUp className="h-3 w-3 text-success" />
-              <p className="text-[10px] font-semibold uppercase text-muted-foreground">Helping</p>
+              <p className="text-[10px] font-semibold uppercase text-muted-foreground">{t("score.helping")}</p>
             </div>
             <div className="space-y-1">
               {positives.length === 0 && <p className="text-xs text-muted-foreground">—</p>}
-              {positives.map(([k, v]) => (
-                <div key={k} className="text-xs">
-                  <span className="text-foreground">{FACTOR_META[k].label}</span>
-                  <span className="text-muted-foreground"> · {FACTOR_META[k].format(v)}</span>
+              {positives.map((r) => (
+                <div key={r.key} className="text-xs">
+                  <span className="text-foreground">{t(`score.f.${r.key}`)}</span>
+                  <span className="text-muted-foreground"> · {FEATURE_FORMAT[r.key](r.value)}</span>
                 </div>
               ))}
             </div>
@@ -89,19 +119,27 @@ function CreditScorePanel({ latest, recomputing, onRecompute }: { latest: any; r
           <div>
             <div className="flex items-center gap-1 mb-1.5">
               <TrendingDown className="h-3 w-3 text-destructive" />
-              <p className="text-[10px] font-semibold uppercase text-muted-foreground">Hurting</p>
+              <p className="text-[10px] font-semibold uppercase text-muted-foreground">{t("score.hurting")}</p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {negatives.length === 0 && <p className="text-xs text-muted-foreground">—</p>}
-              {negatives.map(([k, v]) => (
-                <div key={k} className="text-xs">
-                  <span className="text-foreground">{FACTOR_META[k].label}</span>
-                  <span className="text-muted-foreground"> · {FACTOR_META[k].format(v)}</span>
+              {negatives.map((r) => (
+                <div key={r.key} className="text-xs">
+                  <span className="text-foreground">{t(`score.f.${r.key}`)}</span>
+                  <span className="text-muted-foreground"> · {FEATURE_FORMAT[r.key](r.value)}</span>
+                  {r.gap > 0 && (
+                    <p className="text-[10px] text-primary font-semibold">
+                      {t(`score.tip.${r.key}`)} (+{r.gap})
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         </div>
+      )}
+      {latest?.model_version && latest.model_version !== "rule-v1" && (
+        <p className="text-[10px] text-muted-foreground mt-3">{t("score.modelNote")}</p>
       )}
     </div>
   );
