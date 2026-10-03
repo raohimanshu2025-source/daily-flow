@@ -178,6 +178,11 @@ export default function Welcome() {
             <Shield className="h-3.5 w-3.5 text-success" />
             <p className="text-xs text-muted-foreground">{t("welcome.trust")} 🔒</p>
           </div>
+          <div className="flex items-center justify-center gap-3 text-[11px] font-semibold">
+            <button onClick={() => navigate("/privacy")} className="text-muted-foreground hover:text-primary transition-colors">{t("legal.privacy")}</button>
+            <span className="text-muted-foreground">•</span>
+            <button onClick={() => navigate("/terms")} className="text-muted-foreground hover:text-primary transition-colors">{t("legal.terms")}</button>
+          </div>
         </motion.div>
       </div>
     </div>

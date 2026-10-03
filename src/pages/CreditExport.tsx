@@ -1,6 +1,12 @@
 import { useState } from "react";
 import MobileLayout from "@/components/MobileLayout";
-import { Award, Download, TrendingUp, Shield, Clock, PiggyBank, Loader2, Share2, FileJson } from "lucide-react";
+import { Award, Download, TrendingUp, Shield, Clock, PiggyBank, Loader2, Share2, FileJson, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { t } from "@/lib/i18n";
 import { useProfile, useIncomeLogs, useSavingsGoals, useLoans, useExpenses } from "@/hooks/use-cloud-data";
 import { generateCreditReport } from "@/lib/credit-report";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +16,11 @@ import { toast } from "sonner";
 export default function CreditExport() {
   const [exporting, setExporting] = useState(false);
   const [exportingData, setExportingData] = useState(false);
-  const { user } = useAuth();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteText, setDeleteText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
   const { data: income = [] } = useIncomeLogs();
   const { data: savings = [] } = useSavingsGoals();
@@ -93,6 +103,32 @@ export default function CreditExport() {
       toast.error('Could not export your data');
     }
     setExportingData(false);
+  };
+
+  // DPDP Act 2023 §12: right to erasure. The server keeps only records the law
+  // requires (loans that moved money, the loan ledger, the audit log).
+  const handleDeleteAccount = async () => {
+    if (deleteText.trim().toUpperCase() !== "DELETE") return;
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-account", { body: { confirm: "DELETE" } });
+      if (error) {
+        let code = "";
+        try { code = (await (error as any).context?.json())?.error ?? ""; } catch { /* ignore */ }
+        toast.error(code === "OUTSTANDING_LOAN" ? t("delete.owed") : t("delete.failed"));
+        setDeleting(false);
+        return;
+      }
+      if (!data?.ok) throw new Error("delete failed");
+      try { localStorage.clear(); } catch { /* ignore */ }
+      await signOut().catch(() => {});
+      toast.success(t("delete.done"));
+      navigate("/", { replace: true });
+    } catch (e) {
+      console.error(e);
+      toast.error(t("delete.failed"));
+      setDeleting(false);
+    }
   };
 
   return (
@@ -178,7 +214,53 @@ export default function CreditExport() {
             {exportingData ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileJson className="h-4 w-4" />}
             {exportingData ? 'Preparing…' : 'Download my data (JSON)'}
           </button>
+
+          <div className="mt-6">
+            <h3 className="text-sm font-black text-foreground mb-1">{t("delete.title")}</h3>
+            <p className="text-xs text-muted-foreground mb-3">{t("delete.desc")}</p>
+            <button
+              onClick={() => { setDeleteText(""); setDeleteOpen(true); }}
+              className="w-full py-3 rounded-xl border-2 border-destructive/30 text-destructive font-semibold flex items-center justify-center gap-2 hover:bg-destructive/5 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              {t("delete.title")}
+            </button>
+          </div>
+          <p className="text-[11px] text-center text-muted-foreground mt-4">
+            <button onClick={() => navigate("/privacy")} className="text-primary font-semibold">{t("legal.privacy")}</button>
+            {" • "}
+            <button onClick={() => navigate("/terms")} className="text-primary font-semibold">{t("legal.terms")}</button>
+          </p>
         </div>
+
+        <AlertDialog open={deleteOpen} onOpenChange={(o) => !deleting && setDeleteOpen(o)}>
+          <AlertDialogContent className="rounded-2xl max-w-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("delete.confirmTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>{t("delete.confirmBody")}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <label className="text-xs font-semibold text-foreground" htmlFor="delete-confirm">{t("delete.typeToConfirm")}</label>
+            <input
+              id="delete-confirm"
+              value={deleteText}
+              onChange={(e) => setDeleteText(e.target.value)}
+              autoComplete="off"
+              className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground font-bold tracking-widest focus:outline-none focus:border-destructive"
+              placeholder="DELETE"
+              disabled={deleting}
+            />
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>{t("delete.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleDeleteAccount(); }}
+                disabled={deleting || deleteText.trim().toUpperCase() !== "DELETE"}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? t("delete.working") : t("delete.confirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MobileLayout>
   );

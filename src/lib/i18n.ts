@@ -84,6 +84,26 @@ const translations = {
   'notif.title': { en: 'Notifications', hi: 'सूचनाएं' },
   'notif.empty': { en: 'No new notifications', hi: 'कोई नई सूचना नहीं' },
 
+  // Legal pages & account deletion
+  'legal.privacy': { en: 'Privacy Policy', hi: 'गोपनीयता नीति' },
+  'legal.terms': { en: 'Terms of Use', hi: 'उपयोग की शर्तें' },
+  'legal.updated': { en: 'Last updated', hi: 'आखिरी बदलाव' },
+  'legal.back': { en: 'Go back', hi: 'वापस जाएँ' },
+  'legal.switchLang': { en: 'Switch language', hi: 'भाषा बदलें' },
+  'legal.agree': { en: 'By continuing you agree to our', hi: 'आगे बढ़कर आप हमारी इनसे सहमत होते हैं:' },
+  'legal.and': { en: 'and', hi: 'और' },
+  'delete.title': { en: 'Delete my account', hi: 'मेरा खाता हटाएँ' },
+  'delete.desc': { en: 'Permanently delete your account and personal data. Records of loans you actually received are kept as the law requires.', hi: 'अपना खाता और निजी जानकारी हमेशा के लिए हटाएँ। जो लोन सच में मिले थे, उनके रिकॉर्ड कानून के अनुसार रखे जाते हैं।' },
+  'delete.confirmTitle': { en: 'Delete your account?', hi: 'क्या आप अपना खाता हटाना चाहते हैं?' },
+  'delete.confirmBody': { en: 'This cannot be undone. Your profile, income, expenses, savings, KYC documents and notifications will be deleted. Download your data first if you want a copy.', hi: 'यह वापस नहीं हो सकता। आपकी प्रोफ़ाइल, आय, खर्च, बचत, KYC दस्तावेज़ और सूचनाएँ हटा दी जाएँगी। अगर आपको कॉपी चाहिए, तो पहले अपना डेटा डाउनलोड कर लें।' },
+  'delete.typeToConfirm': { en: 'Type DELETE to confirm', hi: 'पुष्टि के लिए DELETE लिखें' },
+  'delete.cancel': { en: 'Cancel', hi: 'रद्द करें' },
+  'delete.confirm': { en: 'Delete forever', hi: 'हमेशा के लिए हटाएँ' },
+  'delete.working': { en: 'Deleting…', hi: 'हटाया जा रहा है…' },
+  'delete.done': { en: 'Your account has been deleted', hi: 'आपका खाता हटा दिया गया है' },
+  'delete.owed': { en: 'Please repay your loan before deleting your account.', hi: 'खाता हटाने से पहले कृपया अपना लोन चुकाएँ।' },
+  'delete.failed': { en: 'Could not delete your account. Please try again or contact support.', hi: 'खाता नहीं हटाया जा सका। फिर से कोशिश करें या सहायता से संपर्क करें।' },
+
   // Transactions
   'txn.title': { en: 'Transactions', hi: 'लेन-देन' },
   'txn.empty': { en: 'No transactions yet', hi: 'अभी कोई लेन-देन नहीं' },

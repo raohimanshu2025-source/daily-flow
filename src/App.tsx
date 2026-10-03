@@ -18,6 +18,7 @@ import Loans from "./pages/Loans";
 import Transactions from "./pages/Transactions";
 import Analytics from "./pages/Analytics";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import LegalPage from "./pages/LegalPage";
 import Services from "./pages/Services";
 import UpiQr from "./pages/UpiQr";
 import Bnpl from "./pages/Bnpl";
@@ -64,6 +65,8 @@ function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/privacy" element={<LegalPage kind="privacy" />} />
+      <Route path="/terms" element={<LegalPage kind="terms" />} />
       <Route path="/onboarding/profile" element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/income" element={<ProtectedRoute><Income /></ProtectedRoute>} />

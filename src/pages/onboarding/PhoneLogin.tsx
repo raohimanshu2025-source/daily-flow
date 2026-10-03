@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Phone, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { t } from "@/lib/i18n";
 import logo from "@/assets/rozanapay-logo.png";
 
 export default function PhoneLogin() {
@@ -224,6 +225,12 @@ export default function PhoneLogin() {
               <span key={badge} className="text-[10px] font-bold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">{badge}</span>
             ))}
           </div>
+          <p className="text-[11px] text-center text-muted-foreground mb-2">
+            {t("legal.agree")}{" "}
+            <button onClick={() => navigate("/terms")} className="text-primary font-semibold">{t("legal.terms")}</button>{" "}
+            {t("legal.and")}{" "}
+            <button onClick={() => navigate("/privacy")} className="text-primary font-semibold">{t("legal.privacy")}</button>
+          </p>
         </motion.div>
       </div>
     </div>
