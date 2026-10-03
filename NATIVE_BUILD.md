@@ -4,7 +4,6 @@ This project is wrapped with **Capacitor 8**. Web build stays unchanged.
 
 ## One-time setup (on your own machine)
 
-1. **Export to GitHub** from Lovable (top-right → GitHub → Connect).
 2. `git clone <your-repo>` and `cd` into it.
 3. `npm install`
 4. `npx cap add android` (and `npx cap add ios` if on a Mac with Xcode).
@@ -35,9 +34,9 @@ npx cap open android
 
 ## Important config
 
-- `appId`: `app.lovable.6865badc27af49cf84e0571337468027` (change before final Play Store submission to your own reverse-domain ID — once published this **cannot** be changed).
+- `appId`: `in.rozanapay.app`. It can still be changed until the first Play Store upload; after that it **cannot** be changed.
 - `appName`: `RozanaPay`
-- The dev `server.url` in `capacitor.config.ts` enables hot-reload from the Lovable sandbox. **Remove the `server` block before producing the release `.aab`** so the app loads bundled assets.
+- There is no `server` block, so the app loads its own bundled build (`dist/`), which talks to the RozanaPay Supabase backend. For live-reload during development only, you can temporarily add `server: { url: 'http://<your-computer-ip>:8080', cleartext: true }` — never ship that.
 
 ## Play Console checklist (RozanaPay-specific)
 
@@ -46,7 +45,7 @@ npx cap open android
 - [x] KYC stored in **private** bucket with signed URL viewer
 - [x] Loan disclosure: APR, fees, lender, consent checkbox (Play Personal Loans policy)
 - [x] OTP server-side rate limit (audit log + otp_attempts)
-- [ ] Replace placeholder NBFC partner name + reg number in `src/pages/Loans.tsx`
-- [ ] Privacy Policy + Terms public URLs
+- [ ] Replace "Lender: not yet assigned" in the KFS (`kfs.lender` in `src/lib/i18n.ts`) with the real NBFC partner name + RBI registration number
+- [x] Privacy Policy + Terms public URLs (https://rozanapay.netlify.app/privacy, /terms)
 - [ ] Data Safety form in Play Console (we collect: phone, name, KYC docs, financial txns)
 - [ ] Sensitive permissions justification (none currently requested beyond INTERNET)

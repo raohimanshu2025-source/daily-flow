@@ -6,6 +6,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/MobileLayout";
 import { CreditCard, X, Clock, CheckCircle, AlertCircle, RefreshCw, TrendingUp, TrendingDown, Wallet, ShieldCheck, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
+import { t } from "@/lib/i18n";
+
+/** t() with {placeholder} substitution. */
+const tf = (key: string, vars: Record<string, string | number>) =>
+  t(key).replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
 
 const loanAmounts = [500, 1000, 2000, 5000, 10000];
 const loanDurations = [7, 14, 30];
@@ -320,17 +325,17 @@ export default function Loans() {
                 </div>
               </div>
               <div className="bg-warning/10 border border-warning/20 rounded-xl p-3 text-xs text-foreground/80 space-y-1.5">
-                <p className="font-bold text-foreground">Key Fact Statement (KFS) — RBI Digital Lending</p>
-                <p>• Lender: RozanaPay NBFC Partner (Reg. No: pending)</p>
-                <p>• Loan Service Provider: RozanaPay (digital lending app)</p>
-                <p>• Min/Max tenure: 7–30 days · Min/Max APR: 24%–36%</p>
-                <p>• Sanctioned ₹{selectedAmount.toLocaleString("en-IN")} · Net disbursal ₹{(selectedAmount - processingFee).toLocaleString("en-IN")} after ₹{processingFee} processing fee</p>
-                <p>• Total to repay ₹{(Math.round(totalRepay) + processingFee).toLocaleString("en-IN")} in {selectedDuration} days · Representative APR {apr}%</p>
-                <p>• Late fee: ₹50/day after due date · No rollover</p>
-                <p>• Cooling-off period: cancel within 3 days and repay only principal + proportionate APR, with no prepayment penalty</p>
-                <p>• Recovery agent details and data-usage policy are shared before any collection contact</p>
-                <p>• Repayment auto-debited via UPI mandate on due date</p>
-                <p>• Grievance Officer: grievance@rozanapay.in · 1800-000-0000 · 30-day SLA (see Help & Grievance)</p>
+                <p className="font-bold text-foreground">{t("kfs.title")}</p>
+                <p>• {t("kfs.lender")}</p>
+                <p>• {t("kfs.lsp")}</p>
+                <p>• {t("kfs.range")}</p>
+                <p>• {tf("kfs.sanctioned", { amount: selectedAmount.toLocaleString("en-IN"), net: (selectedAmount - processingFee).toLocaleString("en-IN"), fee: processingFee })}</p>
+                <p>• {tf("kfs.total", { total: (Math.round(totalRepay) + processingFee).toLocaleString("en-IN"), days: selectedDuration, apr })}</p>
+                <p>• {t("kfs.lateFee")}</p>
+                <p>• {t("kfs.coolingOff")}</p>
+                <p>• {t("kfs.recovery")}</p>
+                <p>• {t("kfs.repayment")}</p>
+                <p>• {t("kfs.grievance")}</p>
               </div>
               <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer select-none">
                 <input type="checkbox" checked={agreedTerms} onChange={(e) => setAgreedTerms(e.target.checked)} className="mt-0.5 accent-primary w-4 h-4" />

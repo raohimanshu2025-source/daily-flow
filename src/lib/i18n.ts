@@ -104,6 +104,19 @@ const translations = {
   'delete.owed': { en: 'Please repay your loan before deleting your account.', hi: 'खाता हटाने से पहले कृपया अपना लोन चुकाएँ।' },
   'delete.failed': { en: 'Could not delete your account. Please try again or contact support.', hi: 'खाता नहीं हटाया जा सका। फिर से कोशिश करें या सहायता से संपर्क करें।' },
 
+  // Loan Key Fact Statement (KFS)
+  'kfs.title': { en: 'Key Fact Statement (KFS) — RBI Digital Lending', hi: 'मुख्य तथ्य विवरण (KFS) — RBI डिजिटल लेंडिंग' },
+  'kfs.lender': { en: 'Lender: not yet assigned — pilot, no real money is lent', hi: 'लोन देने वाला: अभी तय नहीं — पायलट, कोई असली पैसा नहीं दिया जाता' },
+  'kfs.lsp': { en: 'Loan Service Provider: RozanaPay (digital lending app)', hi: 'लोन सेवा प्रदाता: रोज़ानापे (डिजिटल लेंडिंग ऐप)' },
+  'kfs.range': { en: 'Min/Max tenure: 7–30 days · Min/Max APR: 24%–36%', hi: 'न्यूनतम/अधिकतम अवधि: 7–30 दिन · न्यूनतम/अधिकतम APR: 24%–36%' },
+  'kfs.sanctioned': { en: 'Sanctioned ₹{amount} · Net disbursal ₹{net} after ₹{fee} processing fee', hi: 'स्वीकृत ₹{amount} · ₹{fee} प्रोसेसिंग शुल्क के बाद मिलेंगे ₹{net}' },
+  'kfs.total': { en: 'Total to repay ₹{total} in {days} days · Representative APR {apr}%', hi: '{days} दिनों में कुल चुकाना ₹{total} · अनुमानित APR {apr}%' },
+  'kfs.lateFee': { en: 'Late fee: ₹50 per day after the due date, capped at 10% of the loan amount · No rollover', hi: 'देर से भुगतान शुल्क: नियत तारीख के बाद ₹50 प्रतिदिन, अधिकतम लोन राशि का 10% · कोई रोलओवर नहीं' },
+  'kfs.coolingOff': { en: 'Cooling-off period: cancel within 3 days and repay only principal + proportionate APR, with no prepayment penalty', hi: 'कूलिंग-ऑफ अवधि: 3 दिन के अंदर रद्द करें और केवल मूलधन + उतने दिनों का ब्याज चुकाएँ, बिना किसी जुर्माने के' },
+  'kfs.recovery': { en: 'Recovery agent details and data-usage policy are shared before any collection contact', hi: 'वसूली से पहले वसूली एजेंट की जानकारी और डेटा-उपयोग नीति बताई जाती है' },
+  'kfs.repayment': { en: 'Repay in the app before the due date (pilot: repayments are simulated)', hi: 'नियत तारीख से पहले ऐप में चुकाएँ (पायलट: भुगतान केवल प्रदर्शन के लिए हैं)' },
+  'kfs.grievance': { en: 'Complaints: raise a ticket in Help & Grievance · reply within 30 days', hi: 'शिकायत: मदद और शिकायत में टिकट बनाएँ · 30 दिनों में जवाब' },
+
   // Transactions
   'txn.title': { en: 'Transactions', hi: 'लेन-देन' },
   'txn.empty': { en: 'No transactions yet', hi: 'अभी कोई लेन-देन नहीं' },

@@ -1,13 +1,10 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.6865badc27af49cf84e0571337468027',
+  // Permanent once the app is published on Play Store; change only before the first upload.
+  appId: 'in.rozanapay.app',
   appName: 'RozanaPay',
   webDir: 'dist',
-  server: {
-    url: 'https://6865badc-27af-49cf-84e0-571337468027.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,

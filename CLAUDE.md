@@ -64,4 +64,5 @@ Users have low digital literacy: big tap targets, little text, Hindi + English t
 5. Keep every user-visible string in both Hindi and English via `src/lib/i18n.ts`.
 
 ## Known gaps (next work)
-Real payment rails (Razorpay/Cashfree + webhooks into ledger), real KYC provider, SMS provider for OTP, tests + CI (only `src/test/example.test.ts` exists), Privacy Policy/Terms pages, replace invented landing stats ("10L+ users", "₹50Cr+", "4.8★") with honest copy, error monitoring, Play Store assets.
+Done since the move: honest landing stats, Privacy/Terms (`/privacy`, `/terms`, content in `src/lib/legal.ts`), account deletion (`delete-account` function), real Transactions page, honest loan KFS (no fake lender/grievance contacts), Capacitor appId `in.rozanapay.app` with no Lovable `server` block.
+Still open: real payment rails (Razorpay/Cashfree + webhooks into ledger, then set `simulated_repayments` off), real KYC provider (DigiLocker/Digio), SMS provider for phone OTP, tests + CI, error monitoring, Play Store assets, demo-only screens on `src/lib/store.ts` (Gold, Insurance, Bills, Group Savings, UPI QR), real NBFC partner in the KFS, contact email + Grievance Officer in `LEGAL_CONFIG`.
