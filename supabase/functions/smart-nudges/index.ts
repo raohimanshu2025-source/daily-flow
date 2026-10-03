@@ -73,14 +73,15 @@ Credit score: ${userData.profile?.credit_score || 300}
 
 Return JSON array with exactly 5 nudges.`;
 
-    const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const AI_FALLBACK = Deno.env.get("AI_FALLBACK_MODEL") ?? "gemini-3.5-flash-lite";
+    const callModel = (model: string) => fetch(`${AI_BASE_URL}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${AI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: AI_MODEL,
+        model,
         messages: [
           { role: "system", content: "You are a financial advisor for Indian daily wage workers. Return ONLY valid JSON." },
           { role: "user", content: prompt },
@@ -116,10 +117,19 @@ Return JSON array with exactly 5 nudges.`;
         tool_choice: "required",
       }),
     });
+    // Retry busy providers once, then fall back to a lighter model.
+    const attempts = [AI_MODEL, AI_MODEL, AI_FALLBACK];
+    let response = await callModel(attempts[0]);
+    for (let i = 1; i < attempts.length && !response.ok && [429, 500, 503].includes(response.status); i++) {
+      console.warn(`AI provider busy (${response.status}); retrying with ${attempts[i]}`);
+      await response.body?.cancel();
+      await new Promise((r) => setTimeout(r, 800));
+      response = await callModel(attempts[i]);
+    }
 
     if (!response.ok) {
       const status = response.status;
-      if (status === 429) return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (status === 429 || status === 503) return new Response(JSON.stringify({ error: "Smart nudges are busy right now. Please try again in a minute." }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (status === 402) return new Response(JSON.stringify({ error: "Credits exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       console.error("AI provider error:", status, await response.text());
       throw new Error("AI request failed");

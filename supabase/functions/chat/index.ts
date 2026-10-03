@@ -57,21 +57,35 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("AI_API_KEY");
     if (!apiKey) return json({ error: "The assistant isn't set up yet. Please try again later." }, 503);
     const baseUrl = Deno.env.get("AI_BASE_URL") ?? "https://generativelanguage.googleapis.com/v1beta/openai";
-    const model = Deno.env.get("AI_MODEL") ?? "gemini-3.8-flash";
+    const primary = Deno.env.get("AI_MODEL") ?? "gemini-3.8-flash";
+    const fallback = Deno.env.get("AI_FALLBACK_MODEL") ?? "gemini-3.5-flash-lite";
 
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-        stream: true,
-      }),
-    });
+    // Busy (503) or rate-limited (429) providers are common on free tiers:
+    // retry the main model once, then try a lighter fallback model.
+    const attempts = [primary, primary, fallback];
+    let response: Response | null = null;
+    for (let i = 0; i < attempts.length; i++) {
+      response = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: attempts[i],
+          messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+          stream: true,
+        }),
+      });
+      if (response.ok || ![429, 500, 503].includes(response.status) || i === attempts.length - 1) break;
+      console.warn(`AI provider busy (${response.status}) on ${attempts[i]}; retrying`);
+      await response.body?.cancel();
+      await new Promise((r) => setTimeout(r, 800));
+    }
 
-    if (!response.ok) {
-      if (response.status === 429) return json({ error: "Too many requests. Please wait a moment and try again." }, 429);
-      console.error("AI provider error:", response.status, await response.text());
+    if (!response || !response.ok) {
+      const status = response?.status ?? 0;
+      console.error("AI provider error:", status, response ? await response.text() : "no response");
+      if (status === 429 || status === 503) {
+        return json({ error: "The assistant is busy right now. Please try again in a minute." }, 503);
+      }
       return json({ error: "AI service unavailable" }, 502);
     }
 
