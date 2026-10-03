@@ -1,8 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import MobileLayout from "@/components/MobileLayout";
-import { QrCode, ShoppingBag, Coins, Shield, Gift, Smartphone, MessageCircle, Users, Award, Brain, Receipt, LifeBuoy } from "lucide-react";
+import { QrCode, ShoppingBag, Coins, Shield, Gift, Smartphone, MessageCircle, Users, Award, Brain, Receipt, LifeBuoy, Landmark } from "lucide-react";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/hooks/use-language";
 
 const services = [
+  { icon: Landmark, label: "ben.service", desc: "ben.serviceDesc", path: "/benefits", color: "bg-success/10 text-success" },
   { icon: QrCode, label: "UPI QR Pay", desc: "Receive payments via QR", path: "/upi-qr", color: "bg-primary/10 text-primary" },
   { icon: ShoppingBag, label: "Buy Now Pay Later", desc: "Essentials on credit", path: "/bnpl", color: "bg-warning/10 text-warning" },
   { icon: Coins, label: "Digital Gold", desc: "Save in gold from ₹10", path: "/gold", color: "bg-accent/10 text-accent" },
@@ -19,6 +22,7 @@ const services = [
 
 export default function Services() {
   const navigate = useNavigate();
+  useLanguage();
 
   return (
     <MobileLayout>
@@ -37,8 +41,8 @@ export default function Services() {
                 <s.icon className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground leading-tight">{s.label}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">{s.desc}</p>
+                <p className="text-sm font-semibold text-foreground leading-tight">{t(s.label)}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{t(s.desc)}</p>
               </div>
             </button>
           ))}
