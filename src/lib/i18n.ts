@@ -84,6 +84,17 @@ const translations = {
   'notif.title': { en: 'Notifications', hi: 'सूचनाएं' },
   'notif.empty': { en: 'No new notifications', hi: 'कोई नई सूचना नहीं' },
 
+  // Transactions
+  'txn.title': { en: 'Transactions', hi: 'लेन-देन' },
+  'txn.empty': { en: 'No transactions yet', hi: 'अभी कोई लेन-देन नहीं' },
+  'txn.pending': { en: 'Pending', hi: 'प्रक्रिया में' },
+  'txn.failed': { en: 'Failed', hi: 'असफल' },
+  'txn.type.income': { en: 'Income', hi: 'आय' },
+  'txn.type.savings': { en: 'Savings', hi: 'बचत' },
+  'txn.type.loan': { en: 'Loan', hi: 'लोन' },
+  'txn.type.transfer': { en: 'Transfer', hi: 'ट्रांसफर' },
+  'txn.type.expense': { en: 'Expense', hi: 'खर्च' },
+
   // Welcome (landing) — honest product facts, no invented metrics
   'welcome.stat.loans': { en: 'Micro-loans', hi: 'छोटे लोन' },
   'welcome.stat.score': { en: 'Credit score', hi: 'क्रेडिट स्कोर' },
