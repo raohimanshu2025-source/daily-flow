@@ -4,16 +4,20 @@ import { Send, Bot, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/hooks/use-language";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
-const quickReplies = ["How to save more?", "Explain BNPL", "Loan tips", "Budget help", "What is digital gold?"];
+const quickReplyKeys = ["chat.qr.saveMore", "chat.qr.bnpl", "chat.qr.loanTips", "chat.qr.budget", "chat.qr.gold"];
 
 export default function ChatBotPage() {
+  useLanguage();
+  const quickReplies = quickReplyKeys.map((k) => t(k));
   const [messages, setMessages] = useState<Msg[]>([
-    { role: "assistant", content: "Namaste! 🙏 I'm your **RozanaPay AI assistant**.\n\nAsk me anything about savings, loans, budgeting, or financial planning!\n\nआप हिंदी या English में पूछ सकते हैं!" }
+    { role: "assistant", content: t("chat.welcome") }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +39,7 @@ export default function ChatBotPage() {
       // (the public key alone would let anyone on the internet use the AI).
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("Please sign in again");
+        toast.error(t("chat.err.signIn"));
         setIsLoading(false);
         return;
       }
@@ -51,7 +55,7 @@ export default function ChatBotPage() {
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Request failed" }));
-        toast.error(err.error || "Something went wrong");
+        toast.error(err.error || t("chat.err.generic"));
         setIsLoading(false);
         return;
       }
@@ -99,7 +103,7 @@ export default function ChatBotPage() {
       }
     } catch (e) {
       console.error(e);
-      toast.error("Failed to get response");
+      toast.error(t("chat.err.noResponse"));
     }
     setIsLoading(false);
   };
@@ -108,8 +112,8 @@ export default function ChatBotPage() {
     <MobileLayout>
       <div className="flex flex-col h-[calc(100vh-5rem)]">
         <div className="px-5 pt-6 pb-2">
-          <h1 className="text-xl font-black text-foreground mb-0.5">AI Assistant 🤖</h1>
-          <p className="text-xs text-muted-foreground">Powered by AI · Hindi & English</p>
+          <h1 className="text-xl font-black text-foreground mb-0.5">{t("chat.title")}</h1>
+          <p className="text-xs text-muted-foreground">{t("chat.subtitle")}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
@@ -164,11 +168,11 @@ export default function ChatBotPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendMessage(input)}
-              placeholder="Ask anything..."
+              placeholder={t("chat.placeholder")}
               disabled={isLoading}
               className="flex-1 px-4 py-2.5 rounded-full bg-card border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
             />
-            <button onClick={() => sendMessage(input)} disabled={isLoading}
+            <button onClick={() => sendMessage(input)} disabled={isLoading} aria-label={t("chat.send")}
               className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shrink-0 disabled:opacity-50">
               <Send className="h-4 w-4 text-primary-foreground" />
             </button>

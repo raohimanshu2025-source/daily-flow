@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import MobileLayout from "@/components/MobileLayout";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function KycUpload() {
   const { user } = useAuth();
@@ -16,6 +18,7 @@ export default function KycUpload() {
   const [preview, setPreview] = useState<string | null>(null);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const navigate = useNavigate();
+  useLanguage();
 
   // Phase 1: fetch a signed URL for previously uploaded KYC doc (private bucket)
   useEffect(() => {
@@ -34,11 +37,11 @@ export default function KycUpload() {
 
     // Validate file
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("File must be less than 5MB");
+      toast.error(t("kyc.err.tooBig"));
       return;
     }
     if (!['image/jpeg', 'image/png', 'application/pdf'].includes(file.type)) {
-      toast.error("Only JPG, PNG, or PDF allowed");
+      toast.error(t("kyc.err.badType"));
       return;
     }
 
@@ -52,7 +55,7 @@ export default function KycUpload() {
       .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
-      toast.error("Upload failed: " + uploadError.message);
+      toast.error(t("kyc.err.uploadFailed").replace("{error}", uploadError.message));
       setUploading(false);
       return;
     }
@@ -65,11 +68,11 @@ export default function KycUpload() {
 
     setUploading(false);
     if (updateError) {
-      toast.error("Failed to update profile");
+      toast.error(t("kyc.err.profile"));
       return;
     }
 
-    toast.success("KYC document uploaded! 📄");
+    toast.success(t("kyc.uploaded"));
     // Phase 1: audit log
     await supabase.rpc('log_audit_event', {
       _action: 'kyc.submitted',
@@ -94,7 +97,7 @@ export default function KycUpload() {
           <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center">
             <ArrowLeft className="h-4 w-4 text-foreground" />
           </button>
-          <h1 className="text-xl font-black text-foreground">KYC Verification 🪪</h1>
+          <h1 className="text-xl font-black text-foreground">{t("kyc.title")}</h1>
         </div>
 
         {/* Status Banner */}
@@ -114,16 +117,16 @@ export default function KycUpload() {
            <Upload className="h-6 w-6 text-muted-foreground shrink-0" />}
           <div>
             <p className="text-sm font-bold text-foreground">
-              {kycStatus === 'verified' ? 'KYC Verified ✅' :
-               kycStatus === 'submitted' ? 'Under Review ⏳' :
-               kycStatus === 'rejected' ? 'Rejected ❌' :
-               'KYC Pending'}
+              {kycStatus === 'verified' ? t("kyc.status.verified") :
+               kycStatus === 'submitted' ? t("kyc.status.submitted") :
+               kycStatus === 'rejected' ? t("kyc.status.rejected") :
+               t("kyc.status.pending")}
             </p>
             <p className="text-xs text-muted-foreground">
-              {kycStatus === 'verified' ? 'Your identity has been verified' :
-               kycStatus === 'submitted' ? 'We\'re reviewing your document' :
-               kycStatus === 'rejected' ? 'Please upload a clearer document' :
-               'Upload your ID to unlock all features'}
+              {kycStatus === 'verified' ? t("kyc.statusDesc.verified") :
+               kycStatus === 'submitted' ? t("kyc.statusDesc.submitted") :
+               kycStatus === 'rejected' ? t("kyc.statusDesc.rejected") :
+               t("kyc.statusDesc.pending")}
             </p>
           </div>
         </motion.div>
@@ -135,8 +138,8 @@ export default function KycUpload() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <h3 className="text-sm font-bold text-foreground mb-3">Upload ID Document</h3>
-            <p className="text-xs text-muted-foreground mb-4">Aadhaar Card, PAN Card, or Voter ID</p>
+            <h3 className="text-sm font-bold text-foreground mb-3">{t("kyc.uploadTitle")}</h3>
+            <p className="text-xs text-muted-foreground mb-4">{t("kyc.uploadHint")}</p>
 
             <label className="block cursor-pointer">
               <input type="file" accept="image/jpeg,image/png,application/pdf" onChange={handleUpload} className="hidden" />
@@ -144,15 +147,15 @@ export default function KycUpload() {
                 {uploading ? (
                   <div className="flex flex-col items-center gap-3">
                     <span className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
-                    <p className="text-sm font-semibold text-primary">Uploading...</p>
+                    <p className="text-sm font-semibold text-primary">{t("kyc.uploading")}</p>
                   </div>
                 ) : (
                   <>
                     <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-3 shadow-glow">
                       <Upload className="h-6 w-6 text-white" />
                     </div>
-                    <p className="text-sm font-bold text-foreground mb-1">Tap to upload</p>
-                    <p className="text-xs text-muted-foreground">JPG, PNG or PDF · Max 5MB</p>
+                    <p className="text-sm font-bold text-foreground mb-1">{t("kyc.tapToUpload")}</p>
+                    <p className="text-xs text-muted-foreground">{t("kyc.fileRules")}</p>
                   </>
                 )}
               </div>
@@ -160,7 +163,7 @@ export default function KycUpload() {
 
             {preview && (
               <div className="mt-4 relative">
-                <img src={preview} alt="KYC Preview" className="w-full rounded-2xl border border-border/50" />
+                <img src={preview} alt={t("kyc.previewAlt")} className="w-full rounded-2xl border border-border/50" />
                 <button onClick={() => setPreview(null)} className="absolute top-2 right-2 w-8 h-8 rounded-full bg-foreground/80 flex items-center justify-center">
                   <X className="h-4 w-4 text-background" />
                 </button>
@@ -178,24 +181,24 @@ export default function KycUpload() {
         >
           {signedUrl && (
             <div className="mb-4">
-              <h3 className="text-sm font-bold text-foreground mb-2">Your uploaded document</h3>
+              <h3 className="text-sm font-bold text-foreground mb-2">{t("kyc.yourDoc")}</h3>
               <a href={signedUrl} target="_blank" rel="noopener noreferrer"
                  className="block text-xs text-primary font-semibold underline break-all">
-                View securely (link expires in 1 hour)
+                {t("kyc.viewSecure")}
               </a>
             </div>
           )}
-          <h3 className="text-sm font-bold text-foreground mb-3">Accepted Documents</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3">{t("kyc.accepted")}</h3>
           <div className="space-y-2">
             {[
-              { name: "Aadhaar Card", emoji: "🪪" },
-              { name: "PAN Card", emoji: "💳" },
-              { name: "Voter ID", emoji: "🗳️" },
-              { name: "Driving License", emoji: "🚗" },
+              { id: "aadhaar", emoji: "🪪" },
+              { id: "pan", emoji: "💳" },
+              { id: "voter", emoji: "🗳️" },
+              { id: "dl", emoji: "🚗" },
             ].map(doc => (
-              <div key={doc.name} className="flex items-center gap-2 text-sm">
+              <div key={doc.id} className="flex items-center gap-2 text-sm">
                 <span>{doc.emoji}</span>
-                <span className="text-muted-foreground">{doc.name}</span>
+                <span className="text-muted-foreground">{t(`kyc.doc.${doc.id}`)}</span>
               </div>
             ))}
           </div>

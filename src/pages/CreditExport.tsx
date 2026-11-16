@@ -7,6 +7,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { t } from "@/lib/i18n";
+import { useLanguage } from "@/hooks/use-language";
 import { useProfile, useIncomeLogs, useSavingsGoals, useLoans, useExpenses } from "@/hooks/use-cloud-data";
 import { generateCreditReport } from "@/lib/credit-report";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
 export default function CreditExport() {
+  useLanguage();
   const [exporting, setExporting] = useState(false);
   const [exportingData, setExportingData] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -33,13 +35,21 @@ export default function CreditExport() {
   const loansRepaid = loans.filter((l: any) => l.status === 'repaid' || l.status === 'closed').length;
 
   const scoreColor = score >= 700 ? 'text-success' : score >= 500 ? 'text-warning' : 'text-destructive';
+  // English label/factors go into the PDF (its font cannot draw Hindi); the screen shows translated ones.
   const scoreLabel = score >= 800 ? 'Excellent' : score >= 700 ? 'Good' : score >= 600 ? 'Fair' : score >= 500 ? 'Poor' : 'Building';
+  const scoreLabelShown = t(score >= 800 ? 'score.band.excellent' : score >= 700 ? 'score.band.good' : score >= 600 ? 'score.band.fair' : score >= 500 ? 'score.band.poor' : 'cex.building');
 
   const factors = [
     { icon: TrendingUp, label: "Income Consistency", value: `${daysActive} days logged`, score: Math.min(daysActive * 5, 100) },
     { icon: PiggyBank, label: "Savings Behavior", value: `₹${totalSaved.toLocaleString("en-IN")} saved`, score: Math.min(Math.floor(totalSaved / 100), 100) },
     { icon: Clock, label: "Repayment History", value: `${loansRepaid} loans repaid`, score: loansRepaid > 0 ? 80 : 20 },
     { icon: Shield, label: "App Activity", value: `${daysActive + savings.length} actions`, score: Math.min((daysActive + savings.length) * 3, 100) },
+  ];
+  const factorsShown = [
+    { label: t("cex.f.income"), value: t("cex.f.incomeVal").replace("{n}", String(daysActive)) },
+    { label: t("cex.f.savings"), value: t("cex.f.savingsVal").replace("{amt}", totalSaved.toLocaleString("en-IN")) },
+    { label: t("cex.f.repay"), value: t("cex.f.repayVal").replace("{n}", String(loansRepaid)) },
+    { label: t("cex.f.activity"), value: t("cex.f.activityVal").replace("{n}", String(daysActive + savings.length)) },
   ];
 
   const handleExport = async (share: boolean) => {
@@ -52,7 +62,7 @@ export default function CreditExport() {
       if (share && navigator.canShare) {
         const file = new File([blob], filename, { type: 'application/pdf' });
         if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'RozanaPay Credit Report' });
+          await navigator.share({ files: [file], title: t('cex.shareTitle') });
           setExporting(false);
           return;
         }
@@ -61,10 +71,10 @@ export default function CreditExport() {
       const a = document.createElement('a');
       a.href = url; a.download = filename; a.click();
       URL.revokeObjectURL(url);
-      toast.success("Credit report downloaded");
+      toast.success(t("cex.reportDone"));
     } catch (e) {
       console.error(e);
-      toast.error("Could not generate report");
+      toast.error(t("cex.reportFail"));
     }
     setExporting(false);
   };
@@ -99,10 +109,10 @@ export default function CreditExport() {
       a.download = `RozanaPay_MyData_${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success('Your data has been downloaded');
+      toast.success(t('cex.dataDone'));
     } catch (e) {
       console.error(e);
-      toast.error('Could not export your data');
+      toast.error(t('cex.dataFail'));
     }
     setExportingData(false);
   };
@@ -136,15 +146,15 @@ export default function CreditExport() {
   return (
     <MobileLayout>
       <div className="px-5 pt-6">
-        <h1 className="text-xl font-bold text-foreground mb-1">Financial Identity</h1>
-        <p className="text-sm text-muted-foreground mb-5">Your RozanaPay credit profile</p>
+        <h1 className="text-xl font-bold text-foreground mb-1">{t("cex.title")}</h1>
+        <p className="text-sm text-muted-foreground mb-5">{t("cex.subtitle")}</p>
 
         {/* Score Card */}
         <div className="bg-card rounded-2xl p-6 shadow-elevated text-center mb-6">
           <Award className="h-10 w-10 mx-auto mb-3 text-primary" />
-          <p className="text-sm text-muted-foreground mb-1">RozanaPay Score</p>
+          <p className="text-sm text-muted-foreground mb-1">{t("cex.scoreName")}</p>
           <h2 className={`text-5xl font-bold ${scoreColor}`}>{score}</h2>
-          <p className={`text-sm font-semibold ${scoreColor} mt-1`}>{scoreLabel}</p>
+          <p className={`text-sm font-semibold ${scoreColor} mt-1`}>{scoreLabelShown}</p>
           <div className="w-full h-3 rounded-full bg-muted mt-4">
             <div
               className="h-full rounded-full gradient-accent transition-all"
@@ -159,7 +169,7 @@ export default function CreditExport() {
 
         {/* Score Factors */}
         <div className="mb-6">
-          <h3 className="font-semibold text-foreground mb-3">Score Factors</h3>
+          <h3 className="font-semibold text-foreground mb-3">{t("cex.factors")}</h3>
           <div className="space-y-3">
             {factors.map((f, i) => (
               <div key={i} className="bg-card rounded-xl p-4 shadow-card">
@@ -167,10 +177,10 @@ export default function CreditExport() {
                   <f.icon className="h-5 w-5 text-primary" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-foreground">{f.label}</p>
+                      <p className="text-sm font-medium text-foreground">{factorsShown[i].label}</p>
                       <span className="text-xs text-muted-foreground">{f.score}/100</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{f.value}</p>
+                    <p className="text-xs text-muted-foreground">{factorsShown[i].value}</p>
                   </div>
                 </div>
                 <div className="w-full h-1.5 rounded-full bg-muted">
@@ -188,7 +198,7 @@ export default function CreditExport() {
           className="w-full py-3.5 rounded-xl gradient-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 shadow-elevated mb-3 disabled:opacity-50"
         >
           {exporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
-          {exporting ? "Generating…" : "Download Credit Report (PDF)"}
+          {exporting ? t("cex.generating") : t("cex.downloadPdf")}
         </button>
         <button
           onClick={() => handleExport(true)}
@@ -196,17 +206,17 @@ export default function CreditExport() {
           className="w-full py-3 rounded-xl bg-muted text-foreground font-semibold flex items-center justify-center gap-2 mb-4 disabled:opacity-50"
         >
           <Share2 className="h-4 w-4" />
-          Share with Bank / NBFC
+          {t("cex.share")}
         </button>
         <p className="text-xs text-center text-muted-foreground mb-6">
-          Share your financial identity with banks & NBFCs to access formal credit
+          {t("cex.shareHint")}
         </p>
 
         {/* DPDP data portability */}
         <div className="border-t border-border/50 pt-5 mb-8">
-          <h3 className="text-sm font-black text-foreground mb-1">Your data, your right 🛡️</h3>
+          <h3 className="text-sm font-black text-foreground mb-1">{t("cex.dataTitle")}</h3>
           <p className="text-xs text-muted-foreground mb-3">
-            Download every record we hold about you as a JSON file (DPDP Act 2023).
+            {t("cex.dataDesc")}
           </p>
           <button
             onClick={handleDataExport}
@@ -214,7 +224,7 @@ export default function CreditExport() {
             className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {exportingData ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileJson className="h-4 w-4" />}
-            {exportingData ? 'Preparing…' : 'Download my data (JSON)'}
+            {exportingData ? t('cex.preparing') : t('cex.dataDownload')}
           </button>
 
           <div className="mt-6">

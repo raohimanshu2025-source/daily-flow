@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/hooks/use-language";
 
 interface Nudge {
   title: string;
@@ -32,6 +34,7 @@ const typeIcons: Record<string, any> = {
 };
 
 export default function SmartNudges() {
+  useLanguage();
   const [nudges, setNudges] = useState<Nudge[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -50,12 +53,12 @@ export default function SmartNudges() {
       }
     } catch (e: any) {
       console.error(e);
-      toast.error("Could not load smart nudges");
+      toast.error(t("nudge.err.load"));
       // Fallback nudges
       setNudges([
-        { title: "Start Tracking", message: "Log your daily income to unlock personalized insights!", type: "tip", emoji: "📝" },
-        { title: "Save Daily", message: "Even ₹10/day adds up to ₹3,650/year. Start small!", type: "goal", emoji: "🎯" },
-        { title: "Build Credit", message: "Timely loan repayments boost your credit score significantly.", type: "tip", emoji: "📈" },
+        { title: t("nudge.fb.track.title"), message: t("nudge.fb.track.msg"), type: "tip", emoji: "📝" },
+        { title: t("nudge.fb.save.title"), message: t("nudge.fb.save.msg"), type: "goal", emoji: "🎯" },
+        { title: t("nudge.fb.credit.title"), message: t("nudge.fb.credit.msg"), type: "tip", emoji: "📈" },
       ]);
     }
     setLoading(false);
@@ -71,10 +74,10 @@ export default function SmartNudges() {
       if (error) throw error;
       if (data?.nudges) setNudges(data.nudges);
       qc.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success(`Saved ${data?.persisted ?? 0} nudges to your feed`);
+      toast.success(t("nudge.saved").replace("{n}", String(data?.persisted ?? 0)));
     } catch (e) {
       console.error(e);
-      toast.error("Could not save to feed");
+      toast.error(t("nudge.err.save"));
     }
     setSaving(false);
   };
@@ -84,21 +87,21 @@ export default function SmartNudges() {
       <div className="px-5 pt-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center">
+            <button onClick={() => navigate(-1)} aria-label={t("nudge.back")} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center">
               <ArrowLeft className="h-4 w-4 text-foreground" />
             </button>
             <div>
-              <h1 className="text-xl font-black text-foreground">Smart Insights 🧠</h1>
-              <p className="text-xs text-muted-foreground">AI-powered tips for your finances</p>
+              <h1 className="text-xl font-black text-foreground">{t("nudge.title")}</h1>
+              <p className="text-xs text-muted-foreground">{t("nudge.subtitle")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={saveToFeed} disabled={loading || saving || nudges.length === 0}
               className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-xs font-bold flex items-center gap-1.5 disabled:opacity-50">
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellPlus className="h-3.5 w-3.5" />}
-              Save to feed
+              {t("nudge.saveFeed")}
             </button>
-            <button onClick={fetchNudges} disabled={loading}
+            <button onClick={fetchNudges} disabled={loading} aria-label={t("nudge.refresh")}
               className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center disabled:opacity-50">
               <RefreshCw className={`h-4 w-4 text-primary ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -110,8 +113,8 @@ export default function SmartNudges() {
             <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center shadow-glow">
               <Brain className="h-7 w-7 text-primary-foreground animate-pulse" />
             </div>
-            <p className="text-sm font-bold text-foreground">Analyzing your finances...</p>
-            <p className="text-xs text-muted-foreground">AI is generating personalized insights</p>
+            <p className="text-sm font-bold text-foreground">{t("nudge.loading")}</p>
+            <p className="text-xs text-muted-foreground">{t("nudge.loadingSub")}</p>
           </div>
         ) : (
           <div className="space-y-3 mb-6">
