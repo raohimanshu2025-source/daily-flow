@@ -22,6 +22,8 @@ import LegalPage from "./pages/LegalPage";
 import Services from "./pages/Services";
 import Benefits from "./pages/Benefits";
 import SafeToSpend from "./pages/SafeToSpend";
+import ComingSoon from "./pages/ComingSoon";
+import { LIVE_SERVICES } from "./lib/features";
 import UpiQr from "./pages/UpiQr";
 import Bnpl from "./pages/Bnpl";
 import DigitalGold from "./pages/DigitalGold";
@@ -81,14 +83,14 @@ function AppRoutes() {
       <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
       <Route path="/safe-to-spend" element={<ProtectedRoute><SafeToSpend /></ProtectedRoute>} />
       <Route path="/benefits" element={<ProtectedRoute><Benefits /></ProtectedRoute>} />
-      <Route path="/upi-qr" element={<ProtectedRoute><UpiQr /></ProtectedRoute>} />
-      <Route path="/bnpl" element={<ProtectedRoute><Bnpl /></ProtectedRoute>} />
-      <Route path="/gold" element={<ProtectedRoute><DigitalGold /></ProtectedRoute>} />
-      <Route path="/insurance" element={<ProtectedRoute><InsurancePage /></ProtectedRoute>} />
-      <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
-      <Route path="/bills" element={<ProtectedRoute><BillPayments /></ProtectedRoute>} />
+      <Route path="/upi-qr" element={<ProtectedRoute>{LIVE_SERVICES.upiQr ? <UpiQr /> : <ComingSoon service="upiQr" />}</ProtectedRoute>} />
+      <Route path="/bnpl" element={<ProtectedRoute>{LIVE_SERVICES.bnpl ? <Bnpl /> : <ComingSoon service="bnpl" />}</ProtectedRoute>} />
+      <Route path="/gold" element={<ProtectedRoute>{LIVE_SERVICES.gold ? <DigitalGold /> : <ComingSoon service="gold" />}</ProtectedRoute>} />
+      <Route path="/insurance" element={<ProtectedRoute>{LIVE_SERVICES.insurance ? <InsurancePage /> : <ComingSoon service="insurance" />}</ProtectedRoute>} />
+      <Route path="/rewards" element={<ProtectedRoute>{LIVE_SERVICES.rewards ? <Rewards /> : <ComingSoon service="rewards" />}</ProtectedRoute>} />
+      <Route path="/bills" element={<ProtectedRoute>{LIVE_SERVICES.bills ? <BillPayments /> : <ComingSoon service="bills" />}</ProtectedRoute>} />
       <Route path="/chatbot" element={<ProtectedRoute><ChatBotPage /></ProtectedRoute>} />
-      <Route path="/group-savings" element={<ProtectedRoute><GroupSavingsPage /></ProtectedRoute>} />
+      <Route path="/group-savings" element={<ProtectedRoute>{LIVE_SERVICES.groupSavings ? <GroupSavingsPage /> : <ComingSoon service="groupSavings" />}</ProtectedRoute>} />
       <Route path="/credit-export" element={<ProtectedRoute><CreditExport /></ProtectedRoute>} />
       <Route path="/smart-nudges" element={<ProtectedRoute><SmartNudges /></ProtectedRoute>} />
       <Route path="/kyc" element={<ProtectedRoute><KycUpload /></ProtectedRoute>} />
