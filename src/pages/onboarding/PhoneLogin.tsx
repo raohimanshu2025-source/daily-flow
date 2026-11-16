@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Phone, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { t } from "@/lib/i18n";
+import { FEATURES } from "@/lib/features";
+import { useLanguage } from "@/hooks/use-language";
+import LangToggle from "@/components/LangToggle";
 import logo from "@/assets/rozanapay-logo.png";
 
 export default function PhoneLogin() {
@@ -16,6 +19,7 @@ export default function PhoneLogin() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  useLanguage(); // re-render on Hindi/English switch
   const [searchParams] = useSearchParams();
   const nextParam = searchParams.get("next");
   const safeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
@@ -36,12 +40,12 @@ export default function PhoneLogin() {
     const { data: allowed, error: rlErr } = await supabase.rpc('check_otp_rate_limit', { _phone: fullPhone });
     if (rlErr) {
       setLoading(false);
-      toast.error("Could not verify rate limit. Try again.");
+      toast.error(t("login.rateErr"));
       return;
     }
     if (allowed === false) {
       setLoading(false);
-      toast.error("Too many OTP requests. Please wait 15 minutes.");
+      toast.error(t("login.tooMany"));
       return;
     }
 
@@ -50,7 +54,7 @@ export default function PhoneLogin() {
     await supabase.rpc('record_otp_attempt', { _phone: fullPhone });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("OTP sent!");
+    toast.success(t("login.otpSent"));
     navigate("/onboarding/otp", { state: { phone, next: safeNext } });
   };
 
@@ -62,7 +66,7 @@ export default function PhoneLogin() {
       const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: emailRedirect } });
       setLoading(false);
       if (error) { toast.error(error.message); return; }
-      toast.success("Account created!");
+      toast.success(t("login.created"));
       goNext("/onboarding/profile");
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -77,7 +81,7 @@ export default function PhoneLogin() {
     // Standard Supabase Google sign-in (works on any host once the Google
     // provider is enabled in Supabase Auth settings).
     const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectUri } });
-    if (error) toast.error(error.message.includes("not enabled") ? "Google sign-in isn't available yet — please use email." : error.message);
+    if (error) toast.error(error.message.includes("not enabled") ? t("login.googleNA") : error.message);
   };
 
   return (
@@ -92,7 +96,7 @@ export default function PhoneLogin() {
         <button onClick={() => navigate("/")} className="absolute top-6 left-5 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center active:scale-90 transition-transform">
           <ArrowLeft className="h-5 w-5 text-white" />
         </button>
-        <div className="absolute top-6 right-5 text-2xl animate-bounce-gentle">✨</div>
+        <LangToggle variant="glass" className="absolute top-6 right-5" />
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-background rounded-t-[2rem]" />
       </div>
 
@@ -109,15 +113,15 @@ export default function PhoneLogin() {
             </motion.div>
             <div>
               <h1 className="text-2xl font-black text-foreground">
-                {isSignUp ? 'Create Account' : 'Welcome Back'} 
+                {isSignUp ? t("login.createTitle") : t("login.welcomeTitle")} 
                 <span className="inline-block ml-1">{isSignUp ? '🎉' : '👋'}</span>
               </h1>
-              <p className="text-sm text-muted-foreground font-medium">{isSignUp ? 'Sign up to get started' : 'Sign in to continue'}</p>
+              <p className="text-sm text-muted-foreground font-medium">{isSignUp ? t("login.signupSub") : t("login.signinSub")}</p>
             </div>
           </div>
 
           {/* Mode Toggle - pill style */}
-          <div className="flex gap-1 p-1 bg-muted rounded-2xl mb-6 relative">
+          {FEATURES.phoneLogin && <div className="flex gap-1 p-1 bg-muted rounded-2xl mb-6 relative">
             {(['email', 'phone'] as const).map((m) => (
               <button key={m} onClick={() => setMode(m)}
                 className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all relative z-10 flex items-center justify-center gap-2 ${
@@ -131,21 +135,21 @@ export default function PhoneLogin() {
                   />
                 )}
                 <span className="relative z-10 flex items-center gap-2">
-                  {m === 'email' ? <><Mail className="h-4 w-4" /> Email</> : <><Phone className="h-4 w-4" /> Phone</>}
+                  {m === 'email' ? <><Mail className="h-4 w-4" /> {t("login.email")}</> : <><Phone className="h-4 w-4" /> {t("login.phone")}</>}
                 </span>
               </button>
             ))}
-          </div>
+          </div>}
 
           <AnimatePresence mode="wait">
             <motion.div key={mode} initial={{ opacity: 0, x: mode === 'email' ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: mode === 'email' ? 20 : -20 }} transition={{ duration: 0.2 }}>
-              {mode === 'phone' ? (
+              {FEATURES.phoneLogin && mode === 'phone' ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="px-4 py-4 rounded-2xl bg-muted text-foreground font-bold text-base border-2 border-primary/20">🇮🇳 +91</div>
                     <input type="tel" maxLength={10} value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                      placeholder="Mobile number"
+                      placeholder={t("login.mobilePh")}
                       className="flex-1 px-4 py-4 rounded-2xl bg-muted text-foreground text-base font-semibold placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-card border-2 border-transparent focus:border-primary/30 transition-all"
                       autoFocus />
                   </div>
@@ -153,7 +157,7 @@ export default function PhoneLogin() {
                     className="w-full py-4 rounded-2xl gradient-primary text-primary-foreground font-bold text-base disabled:opacity-40 transition-all shadow-glow relative overflow-hidden">
                     <div className="absolute inset-0 shimmer" />
                     <span className="relative z-10">
-                      {loading ? <span className="flex items-center justify-center gap-2"><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...</span> : '📲 Send OTP'}
+                      {loading ? <span className="flex items-center justify-center gap-2"><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t("login.sending")}</span> : <>📲 {t("login.sendOtp")}</>}
                     </span>
                   </motion.button>
                 </div>
@@ -164,7 +168,7 @@ export default function PhoneLogin() {
                       <Mail className="h-4 w-4 text-primary" />
                     </div>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Email address"
+                      placeholder={t("login.emailPh")}
                       className="w-full pl-14 pr-4 py-4 rounded-2xl bg-muted text-foreground text-base font-semibold placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-card border-2 border-transparent focus:border-primary/30 transition-all" />
                   </div>
                   <div className="relative">
@@ -172,7 +176,7 @@ export default function PhoneLogin() {
                       <Lock className="h-4 w-4 text-secondary" />
                     </div>
                     <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Password"
+                      placeholder={t("login.passwordPh")}
                       className="w-full pl-14 pr-14 py-4 rounded-2xl bg-muted text-foreground text-base font-semibold placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-card border-2 border-transparent focus:border-primary/30 transition-all" />
                     <button onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-muted-foreground/10 flex items-center justify-center">
                       {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
@@ -182,17 +186,17 @@ export default function PhoneLogin() {
                     className="w-full py-4 rounded-2xl gradient-primary text-primary-foreground font-bold text-base disabled:opacity-40 transition-all shadow-glow relative overflow-hidden">
                     <div className="absolute inset-0 shimmer" />
                     <span className="relative z-10 flex items-center justify-center gap-2">
-                      {loading ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Please wait...</> : 
-                        isSignUp ? <><Sparkles className="h-5 w-5" /> Create Account</> : <>Sign In 🚀</>}
+                      {loading ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t("login.wait")}</> : 
+                        isSignUp ? <><Sparkles className="h-5 w-5" /> {t("login.createBtn")}</> : <>{t("login.signinBtn")} 🚀</>}
                     </span>
                   </motion.button>
                   <button onClick={() => setIsSignUp(!isSignUp)} className="w-full text-center text-sm font-bold py-2">
-                    <span className="text-muted-foreground">{isSignUp ? 'Already have an account? ' : "Don't have an account? "}</span>
-                    <span className="text-primary">{isSignUp ? 'Sign In' : 'Sign Up'}</span>
+                    <span className="text-muted-foreground">{isSignUp ? t("login.haveAcc") : t("login.noAcc")}{" "}</span>
+                    <span className="text-primary">{isSignUp ? t("login.signinLink") : t("login.signupLink")}</span>
                   </button>
                   {!isSignUp && (
                     <button onClick={() => navigate("/forgot-password")} className="w-full text-center text-xs text-muted-foreground font-semibold py-1 hover:text-primary transition-colors">
-                      Forgot password? 🔑
+                      {t("login.forgot")} 🔑
                     </button>
                   )}
                 </div>
@@ -200,10 +204,11 @@ export default function PhoneLogin() {
             </motion.div>
           </AnimatePresence>
 
+          {FEATURES.googleLogin && <>
           {/* Divider */}
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground font-semibold bg-background px-3 rounded-full">or continue with</span>
+            <span className="text-xs text-muted-foreground font-semibold bg-background px-3 rounded-full">{t("login.or")}</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -216,12 +221,13 @@ export default function PhoneLogin() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            Continue with Google
+            {t("login.google")}
           </motion.button>
+          </>}
 
           {/* Trust badges */}
           <div className="flex items-center justify-center gap-4 mt-6 mb-4">
-            {["🔒 Secure", "⚡ Fast", "💯 Free"].map(badge => (
+            {[`🔒 ${t("login.secure")}`, `⚡ ${t("login.fast")}`, `💯 ${t("login.free")}`].map(badge => (
               <span key={badge} className="text-[10px] font-bold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">{badge}</span>
             ))}
           </div>

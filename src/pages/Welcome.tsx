@@ -1,20 +1,23 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Shield, Zap, PiggyBank, TrendingUp, Star, Wallet, Gift, ChevronRight } from "lucide-react";
+import { ArrowRight, Shield, Zap, PiggyBank, TrendingUp, Star, Landmark, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
+import LangToggle from "@/components/LangToggle";
 import logo from "@/assets/rozanapay-logo.png";
 import { t } from "@/lib/i18n";
 
 const features = [
-  { icon: TrendingUp, title: "Track Income", desc: "Log daily earnings", emoji: "💰", bg: "gradient-primary", shadow: "shadow-glow" },
-  { icon: PiggyBank, title: "Smart Savings", desc: "Auto-save goals", emoji: "🐷", bg: "gradient-success", shadow: "shadow-glow-success" },
-  { icon: Zap, title: "Instant Loans", desc: "Micro-loans fast", emoji: "⚡", bg: "gradient-warm", shadow: "shadow-glow-secondary" },
-  { icon: Gift, title: "Earn Rewards", desc: "Coins & cashback", emoji: "🎁", bg: "gradient-cool", shadow: "" },
+  { icon: TrendingUp, title: "welcome.f.income", desc: "welcome.f.incomeDesc", emoji: "💰", bg: "gradient-primary", shadow: "shadow-glow" },
+  { icon: PiggyBank, title: "welcome.f.savings", desc: "welcome.f.savingsDesc", emoji: "🐷", bg: "gradient-success", shadow: "shadow-glow-success" },
+  { icon: Zap, title: "welcome.f.loans", desc: "welcome.f.loansDesc", emoji: "⚡", bg: "gradient-warm", shadow: "shadow-glow-secondary" },
+  { icon: Landmark, title: "welcome.f.schemes", desc: "welcome.f.schemesDesc", emoji: "🏛️", bg: "gradient-cool", shadow: "" },
 ];
 
 const floatingEmojis = ["💸", "🏦", "📊", "🎯", "💎", "🔐"];
 
 export default function Welcome() {
   const navigate = useNavigate();
+  useLanguage(); // re-render on Hindi/English switch
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-background">
@@ -29,6 +32,7 @@ export default function Welcome() {
       </div>
 
       <div className="relative z-10 flex-1 flex flex-col items-center px-6 pt-12 pb-8 max-w-md mx-auto w-full">
+        <LangToggle className="absolute top-4 right-6 z-20" />
         {/* Floating emojis */}
         {floatingEmojis.map((emoji, i) => (
           <motion.div
@@ -87,7 +91,7 @@ export default function Welcome() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.35 }}
           >
-            Daily earnings. Better life. ✨
+            {t("welcome.tagline")} ✨
           </motion.p>
         </motion.div>
 
@@ -102,9 +106,9 @@ export default function Welcome() {
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4" />
           <div className="absolute top-3 right-4 text-3xl animate-bounce-gentle">🚀</div>
           <div className="relative z-10">
-            <p className="text-white/70 text-xs font-semibold uppercase tracking-wider mb-1">Built for</p>
-            <h2 className="text-xl font-extrabold text-white mb-1">Daily Wage Earners</h2>
-            <p className="text-white/60 text-xs mb-4">Track income, save smartly, access micro-loans — all in one app</p>
+            <p className="text-white/70 text-xs font-semibold uppercase tracking-wider mb-1">{t("welcome.builtFor")}</p>
+            <h2 className="text-xl font-extrabold text-white mb-1">{t("welcome.audience")}</h2>
+            <p className="text-white/60 text-xs mb-4">{t("welcome.heroDesc")}</p>
             <div className="flex gap-4">
               {[
                 { label: "₹500–10K", sub: t("welcome.stat.loans") },
@@ -141,8 +145,8 @@ export default function Welcome() {
               <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center mb-2 ${f.shadow}`}>
                 <f.icon className="h-5 w-5 text-white" />
               </div>
-              <p className="text-sm font-bold text-foreground">{f.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
+              <p className="text-sm font-bold text-foreground">{t(f.title)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t(f.desc)}</p>
             </motion.div>
           ))}
         </div>
@@ -161,7 +165,7 @@ export default function Welcome() {
           >
             <div className="absolute inset-0 shimmer" />
             <span className="relative z-10 flex items-center gap-2">
-              Get Started Free
+              {t("welcome.cta")}
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </span>
           </motion.button>
@@ -170,7 +174,7 @@ export default function Welcome() {
             onClick={() => navigate("/onboarding/phone")}
             className="w-full py-3 rounded-2xl border-2 border-primary/20 text-primary font-semibold text-sm hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
           >
-            Already have an account? Sign In
+            {t("welcome.signin")}
             <ChevronRight className="h-4 w-4" />
           </button>
 
