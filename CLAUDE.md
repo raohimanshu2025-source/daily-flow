@@ -57,6 +57,9 @@ Users have low digital literacy: big tap targets, little text, Hindi + English t
 - Credit score = ML scorecard (`scorecard-v1`, logistic regression on WoE bins) in `public.scorecard_bins`, active version in `app_settings.credit_model_version`. Pipeline + model card in `ml/credit-model/` (trained on SYNTHETIC data — retrain on real outcomes before real lending). Feature names in `compute_credit_score` must match `ml/credit-model/generate_data.py`.
 - Safe to spend (`/safe-to-spend`, dashboard card): next-7-day income forecast in `src/lib/forecast.ts` (weighted weekday profile + calibrated careful estimate), method chosen by backtest in `ml/cashflow-forecast/` (simulated data; see its MODEL_CARD). Python/TS parity tests there.
 - Govt benefits finder (`/benefits`): on-device eligibility rules in `src/lib/benefits.ts`; re-check schemes and bump `BENEFITS_CHECKED_ON`.
+- Feature switches in `src/lib/features.ts`: `FEATURES` (phone OTP and Google login, off until configured) and `LIVE_SERVICES` (UPI QR, BNPL, gold, insurance, bills, group savings, rewards: off = honest Coming soon page, `src/pages/ComingSoon.tsx`). Turn one on only when its partner integration really works.
+- Two-person rule (migration `20261117000000_no_self_approval.sql`): an admin cannot disburse/approve their own loan or review their own KYC. Users can submit their own KYC (status → `submitted`).
+- Pilot events: `public.app_events` (RLS: insert/view own, admins view all; cascade on user delete) written by `track()` in `src/lib/track.ts`; never store typed amounts, quiz answers, documents, chat text or audio. Daily summary view `public.pilot_daily_engagement`.
 - AI functions (`chat`, `smart-nudges`) need the `AI_API_KEY` secret (any OpenAI-compatible API; defaults to Gemini). `chat` requires a signed-in user's token.
 
 ## Rules
