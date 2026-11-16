@@ -68,4 +68,4 @@ Users have low digital literacy: big tap targets, little text, Hindi + English t
 
 ## Known gaps (next work)
 Done since the move: honest landing stats, Privacy/Terms (`/privacy`, `/terms`, content in `src/lib/legal.ts`), account deletion (`delete-account` function), real Transactions page, honest loan KFS (no fake lender/grievance contacts), Capacitor appId `in.rozanapay.app` with no Lovable `server` block.
-Still open: real payment rails (Razorpay/Cashfree + webhooks into ledger, then set `simulated_repayments` off), real KYC provider (DigiLocker/Digio), SMS provider for phone OTP, tests + CI, error monitoring, Play Store assets, demo-only screens on `src/lib/store.ts` (Gold, Insurance, Bills, Group Savings, UPI QR), real NBFC partner in the KFS, contact email + Grievance Officer in `LEGAL_CONFIG`.
+Still open: real payment rails (Razorpay/Cashfree + webhooks into ledger, then set `simulated_repayments` off), real KYC provider (DigiLocker/Digio), SMS provider for phone OTP, tests + CI, error monitoring, Play Store assets, demo-only screens on `src/lib/store.ts` (Gold, Insurance, Bills, Group Savings, UPI QR), real NBFC partner in the KFS.

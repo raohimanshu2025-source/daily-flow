@@ -7,9 +7,9 @@ import type { Language } from "@/lib/i18n";
 /** Fill these in when available. Empty values are simply not shown. */
 export const LEGAL_CONFIG = {
   operator: "RozanaPay",
-  contactEmail: "", // e.g. "privacy@rozanapay.app"
-  grievanceOfficer: "", // name of the Grievance Officer, when appointed
-  lastUpdated: "3 October 2026",
+  contactEmail: "raohimanshu775@gmail.com",
+  grievanceOfficer: "Himanshu Rao",
+  lastUpdated: "16 November 2026",
 };
 
 export type LegalSection = { heading: string; body: string[] };
