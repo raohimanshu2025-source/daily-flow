@@ -5,9 +5,15 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Mail, CheckCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
+import { t } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 import logo from "@/assets/rozanapay-logo.png";
 
+const verifySteps = ["ve.step1", "ve.step2", "ve.step3", "ve.step4"];
+
 export default function VerifyEmail() {
+  useLanguage();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -24,21 +30,21 @@ export default function VerifyEmail() {
       toast.error(error.message);
       return;
     }
-    toast.success("Verification email resent!");
+    toast.success(t("ve.toast.resent"));
   };
 
   const handleCheckVerification = async () => {
     // Refresh the session to check if email is now verified
     const { data, error } = await supabase.auth.refreshSession();
     if (error) {
-      toast.error("Could not refresh session");
+      toast.error(t("ve.toast.refreshFailed"));
       return;
     }
     if (data.user?.email_confirmed_at) {
-      toast.success("Email verified! 🎉");
+      toast.success(t("ve.toast.verified"));
       navigate("/dashboard");
     } else {
-      toast.info("Email not verified yet. Check your inbox.");
+      toast.info(t("ve.toast.notYet"));
     }
   };
 
@@ -48,9 +54,10 @@ export default function VerifyEmail() {
       <div className="absolute inset-0 dots-pattern opacity-20" />
 
       <div className="h-36 gradient-hero animated-gradient relative">
-        <button onClick={() => navigate("/")} className="absolute top-6 left-5 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+        <button onClick={() => navigate("/")} aria-label={t("ve.back")} className="absolute top-6 left-5 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
           <ArrowLeft className="h-5 w-5 text-white" />
         </button>
+        <LangToggle variant="glass" className="absolute top-6 right-5" />
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-background rounded-t-[2rem]" />
       </div>
 
@@ -68,26 +75,21 @@ export default function VerifyEmail() {
             <Mail className="h-10 w-10 text-white" />
           </motion.div>
 
-          <h1 className="text-2xl font-black text-foreground mb-2">Verify Your Email 📧</h1>
+          <h1 className="text-2xl font-black text-foreground mb-2">{t("ve.title")}</h1>
           <p className="text-sm text-muted-foreground mb-2 font-medium">
-            We sent a verification link to
+            {t("ve.sentTo")}
           </p>
           <p className="text-base font-bold text-primary mb-6">{user?.email}</p>
 
           <div className="bg-card rounded-2xl p-5 shadow-card border border-border/50 mb-5 text-left">
-            <h3 className="text-sm font-bold text-foreground mb-3">Steps to verify:</h3>
+            <h3 className="text-sm font-bold text-foreground mb-3">{t("ve.stepsTitle")}</h3>
             <div className="space-y-2">
-              {[
-                "Open your email inbox",
-                "Find the email from RozanaPay",
-                "Click the verification link",
-                "Come back here and click 'I've Verified'",
-              ].map((step, i) => (
+              {verifySteps.map((step, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full gradient-primary flex items-center justify-center shrink-0">
                     <span className="text-[10px] font-bold text-white">{i + 1}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">{step}</p>
+                  <p className="text-xs text-muted-foreground">{t(step)}</p>
                 </div>
               ))}
             </div>
@@ -101,7 +103,7 @@ export default function VerifyEmail() {
             >
               <div className="absolute inset-0 shimmer" />
               <span className="relative z-10 flex items-center justify-center gap-2">
-                <CheckCircle className="h-5 w-5" /> I've Verified My Email
+                <CheckCircle className="h-5 w-5" /> {t("ve.verifiedBtn")}
               </span>
             </motion.button>
 
@@ -111,9 +113,9 @@ export default function VerifyEmail() {
               className="w-full py-3 rounded-2xl border-2 border-primary/20 text-primary font-semibold text-sm flex items-center justify-center gap-2"
             >
               {loading ? (
-                <><span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> Sending...</>
+                <><span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> {t("ve.sending")}</>
               ) : (
-                <><RefreshCw className="h-4 w-4" /> Resend Verification Email</>
+                <><RefreshCw className="h-4 w-4" /> {t("ve.resend")}</>
               )}
             </button>
           </div>

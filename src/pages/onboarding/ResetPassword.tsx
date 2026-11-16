@@ -4,9 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/hooks/use-language";
+import { t } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 import logo from "@/assets/rozanapay-logo.png";
 
 export default function ResetPassword() {
+  useLanguage();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -32,11 +36,11 @@ export default function ResetPassword() {
 
   const handleUpdate = async () => {
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error(t("rp.err.tooShort"));
       return;
     }
     if (password !== confirm) {
-      toast.error("Passwords don't match");
+      toast.error(t("rp.err.mismatch"));
       return;
     }
     setLoading(true);
@@ -53,12 +57,13 @@ export default function ResetPassword() {
   if (!validToken && !window.location.hash.includes('type=recovery')) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-6">
+        <LangToggle className="fixed top-6 right-5" />
         <div className="text-center">
           <p className="text-4xl mb-4">🔗</p>
-          <h2 className="text-xl font-bold text-foreground mb-2">Invalid Reset Link</h2>
-          <p className="text-sm text-muted-foreground mb-4">This link is expired or invalid. Please request a new one.</p>
+          <h2 className="text-xl font-bold text-foreground mb-2">{t("rp.invalidTitle")}</h2>
+          <p className="text-sm text-muted-foreground mb-4">{t("rp.invalidMsg")}</p>
           <button onClick={() => navigate("/forgot-password")} className="text-primary font-bold text-sm">
-            Request New Link →
+            {t("rp.requestNew")}
           </button>
         </div>
       </div>
@@ -71,6 +76,7 @@ export default function ResetPassword() {
       <div className="absolute inset-0 dots-pattern opacity-20" />
 
       <div className="h-36 gradient-hero animated-gradient relative">
+        <LangToggle variant="glass" className="absolute top-6 right-5" />
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-background rounded-t-[2rem]" />
       </div>
 
@@ -81,8 +87,8 @@ export default function ResetPassword() {
               <img src={logo} alt="" className="w-8 h-8 object-contain" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-foreground">New Password 🔐</h1>
-              <p className="text-sm text-muted-foreground font-medium">Choose a strong password</p>
+              <h1 className="text-2xl font-black text-foreground">{t("rp.title")}</h1>
+              <p className="text-sm text-muted-foreground font-medium">{t("rp.subtitle")}</p>
             </div>
           </div>
 
@@ -90,8 +96,8 @@ export default function ResetPassword() {
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
               className="bg-success/10 rounded-2xl p-6 text-center border border-success/20">
               <CheckCircle className="h-12 w-12 text-success mx-auto mb-3" />
-              <h2 className="text-lg font-bold text-foreground mb-2">Password Updated! ✅</h2>
-              <p className="text-sm text-muted-foreground">Redirecting to dashboard...</p>
+              <h2 className="text-lg font-bold text-foreground mb-2">{t("rp.updated")}</h2>
+              <p className="text-sm text-muted-foreground">{t("rp.redirecting")}</p>
             </motion.div>
           ) : (
             <div className="space-y-3">
@@ -100,9 +106,9 @@ export default function ResetPassword() {
                   <Lock className="h-4 w-4 text-primary" />
                 </div>
                 <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
-                  placeholder="New password (min 6 chars)"
+                  placeholder={t("rp.newPh")}
                   className="w-full pl-14 pr-14 py-4 rounded-2xl bg-muted text-foreground text-base font-semibold placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 border-2 border-transparent focus:border-primary/30 transition-all" />
-                <button onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-muted-foreground/10 flex items-center justify-center">
+                <button onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? t("rp.hidePassword") : t("rp.showPassword")} className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-muted-foreground/10 flex items-center justify-center">
                   {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                 </button>
               </div>
@@ -111,7 +117,7 @@ export default function ResetPassword() {
                   <Lock className="h-4 w-4 text-secondary" />
                 </div>
                 <input type={showPassword ? 'text' : 'password'} value={confirm} onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="Confirm password"
+                  placeholder={t("rp.confirmPh")}
                   className="w-full pl-14 pr-4 py-4 rounded-2xl bg-muted text-foreground text-base font-semibold placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 border-2 border-transparent focus:border-primary/30 transition-all" />
               </div>
               <motion.button whileTap={{ scale: 0.97 }} onClick={handleUpdate}
@@ -119,7 +125,7 @@ export default function ResetPassword() {
                 className="w-full py-4 rounded-2xl gradient-primary text-primary-foreground font-bold text-base disabled:opacity-40 shadow-glow relative overflow-hidden">
                 <div className="absolute inset-0 shimmer" />
                 <span className="relative z-10">
-                  {loading ? <span className="flex items-center justify-center gap-2"><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Updating...</span> : 'Update Password 🚀'}
+                  {loading ? <span className="flex items-center justify-center gap-2"><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t("rp.updating")}</span> : t("rp.updateBtn")}
                 </span>
               </motion.button>
             </div>

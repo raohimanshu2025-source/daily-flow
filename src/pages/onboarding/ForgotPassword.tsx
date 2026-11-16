@@ -4,9 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { ArrowLeft, Mail, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/hooks/use-language";
+import { t } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 import logo from "@/assets/rozanapay-logo.png";
 
 export default function ForgotPassword() {
+  useLanguage();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -26,15 +30,18 @@ export default function ForgotPassword() {
     setSent(true);
   };
 
+  const sentMsg = t("fp.sentMsg").split("{email}");
+
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
       <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute inset-0 dots-pattern opacity-20" />
 
       <div className="h-36 gradient-hero animated-gradient relative">
-        <button onClick={() => navigate("/onboarding/phone")} className="absolute top-6 left-5 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+        <button onClick={() => navigate("/onboarding/phone")} aria-label={t("fp.back")} className="absolute top-6 left-5 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
           <ArrowLeft className="h-5 w-5 text-white" />
         </button>
+        <LangToggle variant="glass" className="absolute top-6 right-5" />
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-background rounded-t-[2rem]" />
       </div>
 
@@ -45,8 +52,8 @@ export default function ForgotPassword() {
               <img src={logo} alt="" className="w-8 h-8 object-contain" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-foreground">Reset Password 🔑</h1>
-              <p className="text-sm text-muted-foreground font-medium">We'll send you a reset link</p>
+              <h1 className="text-2xl font-black text-foreground">{t("fp.title")}</h1>
+              <p className="text-sm text-muted-foreground font-medium">{t("fp.subtitle")}</p>
             </div>
           </div>
 
@@ -57,12 +64,12 @@ export default function ForgotPassword() {
               className="bg-success/10 rounded-2xl p-6 text-center border border-success/20"
             >
               <CheckCircle className="h-12 w-12 text-success mx-auto mb-3" />
-              <h2 className="text-lg font-bold text-foreground mb-2">Check your email! 📧</h2>
+              <h2 className="text-lg font-bold text-foreground mb-2">{t("fp.checkEmail")}</h2>
               <p className="text-sm text-muted-foreground mb-4">
-                We sent a password reset link to <strong>{email}</strong>. Click the link to set a new password.
+                {sentMsg[0]}<strong>{email}</strong>{sentMsg.slice(1).join("")}
               </p>
               <button onClick={() => navigate("/onboarding/phone")} className="text-sm text-primary font-bold">
-                Back to Sign In →
+                {t("fp.backToSignIn")}
               </button>
             </motion.div>
           ) : (
@@ -73,7 +80,7 @@ export default function ForgotPassword() {
                 </div>
                 <input
                   type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
+                  placeholder={t("fp.emailPh")}
                   className="w-full pl-14 pr-4 py-4 rounded-2xl bg-muted text-foreground text-base font-semibold placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-card border-2 border-transparent focus:border-primary/30 transition-all"
                   autoFocus
                 />
@@ -88,14 +95,14 @@ export default function ForgotPassword() {
                 <span className="relative z-10">
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t("fp.sending")}
                     </span>
-                  ) : 'Send Reset Link 📨'}
+                  ) : t("fp.sendLink")}
                 </span>
               </motion.button>
               <button onClick={() => navigate("/onboarding/phone")} className="w-full text-center text-sm font-bold py-2">
-                <span className="text-muted-foreground">Remember your password? </span>
-                <span className="text-primary">Sign In</span>
+                <span className="text-muted-foreground">{t("fp.remember")} </span>
+                <span className="text-primary">{t("fp.signIn")}</span>
               </button>
             </div>
           )}
