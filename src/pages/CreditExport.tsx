@@ -78,7 +78,7 @@ export default function CreditExport() {
       const tables = [
         'profiles','income_logs','expenses','savings_goals','loans','loan_ledger',
         'transactions','bnpl_orders','bill_payments','gold_investments','group_savings',
-        'insurance_policies','notifications','rewards','upi_mandates','credit_score_history',
+        'insurance_policies','notifications','rewards','upi_mandates','credit_score_history','app_events',
       ] as const;
       const bundle: Record<string, unknown> = {
         exported_at: new Date().toISOString(),
@@ -87,7 +87,9 @@ export default function CreditExport() {
         notice: 'Personal data export under DPDP Act 2023.',
       };
       for (const t of tables) {
-        const { data, error } = await supabase.from(t as any).select('*');
+        // Filter to the signed-in user: admins can read other users' rows, and
+        // a personal export must never include anyone else's data.
+        const { data, error } = await supabase.from(t as any).select('*').eq('user_id', user.id);
         bundle[t] = error ? { error: error.message } : data;
       }
       const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });

@@ -5,9 +5,10 @@ import MobileLayout from "@/components/MobileLayout";
 import { useProfile } from "@/hooks/use-cloud-data";
 import { useLanguage } from "@/hooks/use-language";
 import { t } from "@/lib/i18n";
+import { track } from "@/lib/track";
 import {
   BENEFITS_CHECKED_ON, findBenefits, workFromOccupation,
-  type BenefitAnswers, type IncomeBand, type Work, type YesNo,
+  type BenefitAnswers, type IncomeBand, type Work, type YesNo, type Match,
 } from "@/lib/benefits";
 
 const INCOMES: IncomeBand[] = ["lt10", "10to15", "15to25", "gt25"];
@@ -38,6 +39,70 @@ function Chips<T extends string>({ value, options, label, onChange, cols = 2 }: 
   );
 }
 
+/** How many schemes to lead with; the rest sit behind "Show more". */
+const TOP = 2;
+
+function SchemeCard({ id, url, match, index, showSteps = false }: {
+  id: string; url: string; match: Match; index: number; showSteps?: boolean;
+}) {
+  const steps = showSteps ? t(`ben.s.${id}.steps`).split("|").map((x) => x.trim()).filter(Boolean) : [];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="bg-card rounded-2xl p-4 shadow-card"
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <p className="text-sm font-bold text-foreground leading-snug">{t(`ben.s.${id}.name`)}</p>
+        <span
+          className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${
+            match === "yes" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
+          }`}
+        >
+          {match === "yes" ? <CheckCircle2 className="h-3 w-3" /> : <HelpCircle className="h-3 w-3" />}
+          {t(`ben.match.${match}`)}
+        </span>
+      </div>
+      <p className="text-xs text-foreground mb-2">
+        <span className="font-semibold">{t("ben.get")}: </span>{t(`ben.s.${id}.get`)}
+      </p>
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-muted rounded-xl p-2">
+          <p className="text-[10px] text-muted-foreground">{t("ben.cost")}</p>
+          <p className="text-xs font-semibold text-foreground">{t(`ben.s.${id}.cost`)}</p>
+        </div>
+        <div className="bg-muted rounded-xl p-2">
+          <p className="text-[10px] text-muted-foreground">{t("ben.docs")}</p>
+          <p className="text-xs font-semibold text-foreground">{t(`ben.s.${id}.docs`)}</p>
+        </div>
+      </div>
+      {steps.length > 0 && (
+        <div className="bg-primary/5 rounded-xl p-3 mb-3">
+          <p className="text-[11px] font-bold text-primary mb-1.5">{t("ben.howTo")}</p>
+          <ol className="space-y-1">
+            {steps.map((st, k) => (
+              <li key={k} className="flex gap-2 text-xs text-foreground">
+                <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">{k + 1}</span>
+                <span>{st}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => track("benefit_link_open", { scheme: id })}
+        className="flex items-center justify-center gap-1.5 w-full bg-primary/10 text-primary text-xs font-bold py-2.5 rounded-xl"
+      >
+        {t("ben.open")} <ExternalLink className="h-3.5 w-3.5" />
+      </a>
+    </motion.div>
+  );
+}
+
 export default function Benefits() {
   useLanguage(); // re-render on Hindi/English switch
   const { data: profile } = useProfile();
@@ -49,6 +114,7 @@ export default function Benefits() {
   const [epf, setEpf] = useState<YesNo>();
   const [tax, setTax] = useState<YesNo>();
   const [answers, setAnswers] = useState<BenefitAnswers | null>(null);
+  const [showMore, setShowMore] = useState(false);
 
   // Pre-fill from the profile once (age and work were given during sign-up).
   useEffect(() => {
@@ -64,7 +130,12 @@ export default function Benefits() {
 
   const submit = () => {
     if (!ready) return;
-    setAnswers({ age: ageNum, income: income!, work: work!, bank: bank!, epf: epf!, tax: tax! });
+    const a: BenefitAnswers = { age: ageNum, income: income!, work: work!, bank: bank!, epf: epf!, tax: tax! };
+    setAnswers(a);
+    setShowMore(false);
+    // Only counts and scheme ids — the quiz answers themselves are never sent.
+    const res = findBenefits(a);
+    track("benefits_result", { count: res.length, top: res[0]?.scheme.id ?? null });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -141,48 +212,30 @@ export default function Benefits() {
               </button>
             </div>
 
-            {results.map(({ scheme, match }, i) => (
-              <motion.div
-                key={scheme.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-card rounded-2xl p-4 shadow-card"
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <p className="text-sm font-bold text-foreground leading-snug">{t(`ben.s.${scheme.id}.name`)}</p>
-                  <span
-                    className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${
-                      match === "yes" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
-                    }`}
-                  >
-                    {match === "yes" ? <CheckCircle2 className="h-3 w-3" /> : <HelpCircle className="h-3 w-3" />}
-                    {t(`ben.match.${match}`)}
-                  </span>
-                </div>
-                <p className="text-xs text-foreground mb-2">
-                  <span className="font-semibold">{t("ben.get")}: </span>{t(`ben.s.${scheme.id}.get`)}
-                </p>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div className="bg-muted rounded-xl p-2">
-                    <p className="text-[10px] text-muted-foreground">{t("ben.cost")}</p>
-                    <p className="text-xs font-semibold text-foreground">{t(`ben.s.${scheme.id}.cost`)}</p>
-                  </div>
-                  <div className="bg-muted rounded-xl p-2">
-                    <p className="text-[10px] text-muted-foreground">{t("ben.docs")}</p>
-                    <p className="text-xs font-semibold text-foreground">{t(`ben.s.${scheme.id}.docs`)}</p>
-                  </div>
-                </div>
-                <a
-                  href={scheme.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 w-full bg-primary/10 text-primary text-xs font-bold py-2.5 rounded-xl"
-                >
-                  {t("ben.open")} <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </motion.div>
+            {results.length > 0 && (
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider pt-1">{t("ben.startWith")}</p>
+            )}
+            {results.slice(0, TOP).map(({ scheme, match }, i) => (
+              <SchemeCard key={scheme.id} id={scheme.id} url={scheme.url} match={match} index={i} showSteps />
             ))}
+
+            {results.length > TOP && (
+              showMore ? (
+                <>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider pt-2">{t("ben.more")}</p>
+                  {results.slice(TOP).map(({ scheme, match }, i) => (
+                    <SchemeCard key={scheme.id} id={scheme.id} url={scheme.url} match={match} index={i} />
+                  ))}
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowMore(true)}
+                  className="w-full bg-muted text-foreground text-sm font-bold py-3 rounded-2xl active:scale-[0.98] transition-all"
+                >
+                  {tf("ben.showMore", { n: results.length - TOP })}
+                </button>
+              )
+            )}
 
             <p className="text-xs text-muted-foreground text-center pt-1">{t("ben.csc")}</p>
           </div>

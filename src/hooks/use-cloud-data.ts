@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './use-auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { track } from '@/lib/track';
 
 // ====== PROFILE ======
 export function useProfile() {
@@ -57,7 +58,7 @@ export function useAddIncome() {
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (log: { amount: number; source: string; payment_type: string }) => {
+    mutationFn: async (log: { amount: number; source: string; payment_type: string; via?: 'tap' | 'voice' | 'text' }) => {
       const { error } = await supabase.from('income_logs').insert({
         user_id: user!.id,
         amount: log.amount,
@@ -73,7 +74,8 @@ export function useAddIncome() {
         description: `Income from ${log.source}`,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_d, log) => {
+      track('income_logged', { via: log.via ?? 'tap', payment_type: log.payment_type });
       qc.invalidateQueries({ queryKey: ['income'] });
       qc.invalidateQueries({ queryKey: ['transactions'] });
     },
@@ -125,6 +127,7 @@ export function useAddToSavings() {
       });
     },
     onSuccess: () => {
+      track('savings_deposit');
       qc.invalidateQueries({ queryKey: ['savings'] });
       qc.invalidateQueries({ queryKey: ['transactions'] });
     },
@@ -162,6 +165,7 @@ export function useAddLoan() {
       });
     },
     onSuccess: () => {
+      track('loan_requested');
       qc.invalidateQueries({ queryKey: ['loans'] });
       qc.invalidateQueries({ queryKey: ['transactions'] });
     },
@@ -310,7 +314,7 @@ export function useAddExpense() {
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (exp: { amount: number; category: string; note: string }) => {
+    mutationFn: async ({ via: _via, ...exp }: { amount: number; category: string; note: string; via?: 'tap' | 'voice' | 'text' }) => {
       const { error } = await supabase.from('expenses').insert({ ...exp, user_id: user!.id });
       if (error) throw error;
       await supabase.from('transactions').insert({
@@ -318,7 +322,8 @@ export function useAddExpense() {
         description: exp.note || exp.category,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_d, exp) => {
+      track('expense_logged', { via: exp.via ?? 'tap', category: exp.category });
       qc.invalidateQueries({ queryKey: ['expenses'] });
       qc.invalidateQueries({ queryKey: ['transactions'] });
     },

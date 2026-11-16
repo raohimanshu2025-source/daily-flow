@@ -9,7 +9,7 @@ export const LEGAL_CONFIG = {
   operator: "RozanaPay",
   contactEmail: "raohimanshu775@gmail.com",
   grievanceOfficer: "Himanshu Rao",
-  lastUpdated: "16 November 2026",
+  lastUpdated: "17 November 2026",
 };
 
 export type LegalSection = { heading: string; body: string[] };
@@ -46,6 +46,7 @@ const privacyEn = (): LegalDoc => ({
         "KYC documents you upload (such as PAN or Aadhaar), stored privately. We advise masking the first 8 digits of your Aadhaar number before uploading.",
         "Messages you type into the AI assistant, short voice notes you record with Speak to log (used only to understand the entry, not stored by us), and support tickets you raise.",
         "Basic technical data needed to keep you signed in and the service secure (login session, IP address in server logs).",
+        "App usage events: which features you use and when (for example, that you logged income by voice, or how many schemes matched). These never include the amounts you type, your quiz answers, documents, chat messages or voice recordings. We use them to see whether the app is helping and to improve it.",
       ],
     },
     {
@@ -127,6 +128,7 @@ const privacyHi = (): LegalDoc => ({
         "आपके अपलोड किए KYC दस्तावेज़ (जैसे PAN या आधार), जो निजी रूप से रखे जाते हैं। अपलोड करने से पहले आधार के पहले 8 अंक छुपा दें।",
         "AI सहायक में लिखे आपके संदेश, बोलकर लिखें में रिकॉर्ड किए छोटे वॉइस नोट (केवल एंट्री समझने के लिए, हम इन्हें नहीं रखते), और आपकी सहायता शिकायतें।",
         "आपको लॉग-इन रखने और सेवा सुरक्षित रखने के लिए ज़रूरी तकनीकी जानकारी (लॉग-इन सत्र, सर्वर लॉग में IP पता)।",
+        "ऐप इस्तेमाल की जानकारी: आप कौन सी सुविधा कब इस्तेमाल करते हैं (जैसे आपने आय आवाज़ से लिखी, या कितनी योजनाएं मिलीं)। इसमें आपकी लिखी रकम, सवालों के जवाब, दस्तावेज़, चैट संदेश या आवाज़ की रिकॉर्डिंग कभी नहीं होती। हम इसका इस्तेमाल यह देखने के लिए करते हैं कि ऐप मदद कर रहा है या नहीं, और उसे बेहतर बनाने के लिए।",
       ],
     },
     {

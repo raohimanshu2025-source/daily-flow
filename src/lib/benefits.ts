@@ -24,6 +24,12 @@ export interface Scheme {
   url: string;
   /** How well the user matches. "check" = probably yes, but a detail must be confirmed. */
   match: (a: BenefitAnswers) => Match;
+  /**
+   * Which scheme to suggest first (lower = sooner). Research on multi-scheme
+   * outreach (CEGA, Delhi NCR migrant workers) found that showing many schemes
+   * at once lowers take-up, so the app leads with the top one or two.
+   */
+  priority: number;
 }
 
 const between = (a: BenefitAnswers, lo: number, hi: number) => a.age >= lo && a.age <= hi;
@@ -36,16 +42,19 @@ const all = (...m: Match[]): Match => (m.includes("no") ? "no" : m.includes("che
 export const SCHEMES: Scheme[] = [
   {
     id: "jandhan",
+    priority: 0,
     url: "https://pmjdy.gov.in/",
     match: (a) => (a.age >= 18 && a.bank !== "yes" ? "yes" : "no"),
   },
   {
     id: "eshram",
+    priority: 2,
     url: "https://eshram.gov.in/",
     match: (a) => all(between(a, 16, 59) ? "yes" : "no", notCovered(a), notTaxPayer(a)),
   },
   {
     id: "ayushman",
+    priority: 8,
     url: "https://beneficiary.nha.gov.in/",
     // Platform workers: ₹5 lakh cover announced for e-Shram-registered workers (Budget 2025-26).
     // Others: depends on family being in the beneficiary list — always "check".
@@ -53,31 +62,37 @@ export const SCHEMES: Scheme[] = [
   },
   {
     id: "pmsym",
+    priority: 5,
     url: "https://maandhan.in/",
     match: (a) => all(between(a, 18, 40) ? "yes" : "no", lowIncome(a) ? "yes" : "no", notCovered(a), notTaxPayer(a)),
   },
   {
     id: "apy",
+    priority: 6,
     url: "https://www.pfrda.org.in/",
     match: (a) => all(between(a, 18, 40) ? "yes" : "no", notTaxPayer(a), a.bank === "yes" ? "yes" : "check"),
   },
   {
     id: "pmsby",
+    priority: 3,
     url: "https://www.jansuraksha.gov.in/",
     match: (a) => all(between(a, 18, 70) ? "yes" : "no", a.bank === "yes" ? "yes" : "check"),
   },
   {
     id: "pmjjby",
+    priority: 4,
     url: "https://www.jansuraksha.gov.in/",
     match: (a) => all(between(a, 18, 50) ? "yes" : "no", a.bank === "yes" ? "yes" : "check"),
   },
   {
     id: "svanidhi",
+    priority: 1,
     url: "https://pmsvanidhi.mohua.gov.in/",
     match: (a) => (a.work === "vendor" && a.age >= 18 ? "yes" : "no"),
   },
   {
     id: "bocw",
+    priority: 7,
     url: "https://www.myscheme.gov.in/",
     // State construction-worker welfare boards: usually 18–60 and 90 days of building work in the last year.
     match: (a) => (a.work === "construction" && between(a, 18, 60) ? "check" : "no"),
@@ -86,8 +101,9 @@ export const SCHEMES: Scheme[] = [
 
 export function findBenefits(a: BenefitAnswers) {
   const results = SCHEMES.map((s) => ({ scheme: s, match: s.match(a) })).filter((r) => r.match !== "no");
-  // Sure matches first, then "check".
-  return results.sort((x, y) => (x.match === y.match ? 0 : x.match === "yes" ? -1 : 1));
+  // Sure matches first, then by priority.
+  return results.sort((x, y) =>
+    x.match !== y.match ? (x.match === "yes" ? -1 : 1) : x.scheme.priority - y.scheme.priority);
 }
 
 /** Map the profile's occupation (set during onboarding) to a quiz answer. */

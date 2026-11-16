@@ -1,4 +1,5 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { trackDailyOpen } from "@/lib/track";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, TrendingUp, PiggyBank, LayoutGrid, BarChart3 } from "lucide-react";
@@ -17,6 +18,7 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
   useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
+  useEffect(() => { trackDailyOpen(); }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto relative">

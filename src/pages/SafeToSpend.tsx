@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { track } from "@/lib/track";
 import { motion } from "framer-motion";
 import { Wallet, AlertTriangle, Info, Loader2, Lock, TrendingUp, CreditCard, PiggyBank, ShoppingBasket, Plus } from "lucide-react";
 import MobileLayout from "@/components/MobileLayout";
@@ -15,6 +17,10 @@ export default function SafeToSpend() {
   const navigate = useNavigate();
   const { data, isLoading } = useSafeToSpend();
   const locale = lang === "hi" ? "hi-IN" : "en-IN";
+  const ready = data ? data.ready : null;
+  useEffect(() => {
+    if (ready !== null) track("safe_to_spend_view", { ready });
+  }, [ready]);
 
   return (
     <MobileLayout>

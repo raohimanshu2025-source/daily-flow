@@ -109,9 +109,9 @@ export default function VoiceLogSheet({ open, onClose }: { open: boolean; onClos
     if (!draft || draft.amount <= 0) return;
     try {
       if (draft.kind === "income") {
-        await addIncome.mutateAsync({ amount: draft.amount, source: draft.source || "Work", payment_type: draft.payment_type });
+        await addIncome.mutateAsync({ amount: draft.amount, source: draft.source || "Work", payment_type: draft.payment_type, via: typing ? "text" : "voice" });
       } else {
-        await addExpense.mutateAsync({ amount: draft.amount, category: draft.category, note: draft.note || draft.transcript.slice(0, 60) });
+        await addExpense.mutateAsync({ amount: draft.amount, category: draft.category, note: draft.note || draft.transcript.slice(0, 60), via: typing ? "text" : "voice" });
       }
       toast.success(draft.kind === "income" ? t("voice.savedIncome") : t("voice.savedExpense"));
       onClose();
