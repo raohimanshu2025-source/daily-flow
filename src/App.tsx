@@ -21,6 +21,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import LegalPage from "./pages/LegalPage";
 import Services from "./pages/Services";
 import Benefits from "./pages/Benefits";
+import Skills from "./pages/Skills";
 import SafeToSpend from "./pages/SafeToSpend";
 import ComingSoon from "./pages/ComingSoon";
 import { LIVE_SERVICES } from "./lib/features";
@@ -82,6 +83,7 @@ function AppRoutes() {
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
       <Route path="/safe-to-spend" element={<ProtectedRoute><SafeToSpend /></ProtectedRoute>} />
+      <Route path="/skills" element={<ProtectedRoute><Skills /></ProtectedRoute>} />
       <Route path="/benefits" element={<ProtectedRoute><Benefits /></ProtectedRoute>} />
       <Route path="/upi-qr" element={<ProtectedRoute>{LIVE_SERVICES.upiQr ? <UpiQr /> : <ComingSoon service="upiQr" />}</ProtectedRoute>} />
       <Route path="/bnpl" element={<ProtectedRoute>{LIVE_SERVICES.bnpl ? <Bnpl /> : <ComingSoon service="bnpl" />}</ProtectedRoute>} />

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import MobileLayout from "@/components/MobileLayout";
-import { QrCode, ShoppingBag, Coins, Shield, Gift, Smartphone, MessageCircle, Users, Award, Brain, Receipt, LifeBuoy, Landmark, Wallet } from "lucide-react";
+import { QrCode, ShoppingBag, Coins, Shield, Gift, Smartphone, MessageCircle, Users, Award, Brain, Receipt, LifeBuoy, Landmark, Wallet, GraduationCap } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/hooks/use-language";
 
@@ -10,6 +10,7 @@ type Service = { icon: typeof Wallet; label: string; desc: string; path: string;
 
 const services: Service[] = [
   { icon: Wallet, label: "sts.service", desc: "sts.serviceDesc", path: "/safe-to-spend", color: "bg-success/10 text-success" },
+  { icon: GraduationCap, label: "sk.service", desc: "sk.serviceDesc", path: "/skills", color: "bg-primary/10 text-primary" },
   { icon: Landmark, label: "ben.service", desc: "ben.serviceDesc", path: "/benefits", color: "bg-success/10 text-success" },
   { icon: Receipt, label: "svc.expenses", desc: "svc.expensesDesc", path: "/expenses", color: "bg-destructive/10 text-destructive" },
   { icon: Award, label: "svc.credit", desc: "svc.creditDesc", path: "/credit-export", color: "bg-success/10 text-success" },

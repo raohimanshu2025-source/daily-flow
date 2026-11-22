@@ -59,6 +59,9 @@ export default function SafeToSpend() {
 
         {data && data.ready && (() => {
           const max = Math.max(1, ...data.days.map((d) => d.typical));
+          // Suggest putting aside about a fifth of this week's spare money, rounded down to ₹10.
+          // Only when there is enough left over to spend after saving it.
+          const saveDaily = data.perDay >= 30 ? Math.max(10, Math.floor((data.spare * 0.2) / 7 / 10) * 10) : 0;
           const rows = [
             { icon: TrendingUp, label: t("sts.income"), sub: tf("sts.incomeTypical", { n: data.typical.toLocaleString("en-IN") }), value: data.cautious, sign: "+", color: "bg-success/10 text-success" },
             { icon: CreditCard, label: t("sts.loans"), sub: data.loansDueList.some((l) => l.overdue) ? t("sts.loanOverdue") : undefined, value: data.loansDue, sign: "−", color: "bg-warning/10 text-warning" },
@@ -82,6 +85,22 @@ export default function SafeToSpend() {
                   <div>
                     <p className="text-sm font-bold text-destructive">{t("sts.tight")}</p>
                     <p className="text-xs text-foreground mt-0.5">{tf("sts.tightBody", { n: Math.abs(data.spare).toLocaleString("en-IN") })}</p>
+                  </div>
+                </div>
+              )}
+
+              {saveDaily > 0 && (
+                <div className="flex gap-3 bg-success/10 rounded-2xl p-4">
+                  <PiggyBank className="h-5 w-5 text-success shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-foreground">{tf("sts.saveTitle", { n: saveDaily })}</p>
+                    <p className="text-xs text-foreground mt-0.5 mb-2">{tf("sts.saveBody", { m: (saveDaily * 30).toLocaleString("en-IN") })}</p>
+                    <button
+                      onClick={() => { track("save_suggestion_click", { per_day: saveDaily }); navigate("/savings"); }}
+                      className="text-xs font-bold text-success"
+                    >
+                      {t("sts.saveCta")} →
+                    </button>
                   </div>
                 </div>
               )}

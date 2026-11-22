@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile, useIncomeLogs, useSavingsGoals, useLoans, useTransactions, useNotifications } from "@/hooks/use-cloud-data";
 import MobileLayout from "@/components/MobileLayout";
-import { Plus, PiggyBank, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid, Moon, Sun, Minus, LogOut, ChevronRight, Wallet, Zap, Mic, Landmark, Award, Receipt } from "lucide-react";
+import { Plus, PiggyBank, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid, Moon, Sun, Minus, LogOut, ChevronRight, Wallet, Zap, Mic, Landmark, Award, GraduationCap } from "lucide-react";
 import { useState } from "react";
 import { useSafeToSpend } from "@/hooks/use-safe-to-spend";
 import VoiceLogSheet from "@/components/VoiceLogSheet";
@@ -287,7 +287,7 @@ export default function Dashboard() {
               { icon: Wallet, label: t('sts.service'), path: "/safe-to-spend", bg: "gradient-success", emoji: "💵" },
               { icon: Landmark, label: t('ben.service'), path: "/benefits", bg: "gradient-accent", emoji: "🏛️" },
               { icon: Award, label: t('svc.credit'), path: "/credit-export", bg: "gradient-secondary", emoji: "📈" },
-              { icon: Receipt, label: t('svc.expenses'), path: "/expenses", bg: "gradient-warm", emoji: "🧾" },
+              { icon: GraduationCap, label: t('sk.service'), path: "/skills", bg: "gradient-warm", emoji: "🎓" },
               { icon: LayoutGrid, label: t('nav.services'), path: "/services", bg: "gradient-primary", emoji: "📱" },
             ].map((s, i) => (
               <motion.button
