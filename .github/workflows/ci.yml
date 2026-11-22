@@ -14,12 +14,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # Tests need no packages, so they run first and report even if install fails.
       - name: Unit tests (benefits, forecast, translations)
         run: node --experimental-strip-types --test tests/*.test.mts
       - name: Forecast parity and end-to-end checks
         run: |
           node --experimental-strip-types ml/cashflow-forecast/tests/parity.test.mts
           node --experimental-strip-types ml/cashflow-forecast/tests/safe.test.mts
+      # The lock file is out of step with package.json (old Lovable lock), so use
+      # npm install like the Netlify build does, rather than npm ci.
+      - run: npm install --no-audit --no-fund
       - name: Build
         run: npm run build
