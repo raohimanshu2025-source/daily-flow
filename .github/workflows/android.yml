@@ -5,6 +5,9 @@ name: Android build
 # - If the signing secrets exist: a signed release AAB to upload to Google Play.
 #   Secrets (repo Settings -> Secrets and variables -> Actions):
 #   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+permissions:
+  contents: write   # to publish the test APK on the "android-test" release page
+
 on:
   workflow_dispatch:
   push:
@@ -14,6 +17,8 @@ on:
 jobs:
   android:
     runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,8 +52,20 @@ jobs:
           name: rozanapay-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
+      # Publish the test APK on a fixed release page so it can be downloaded
+      # straight onto a phone (artifacts above need a GitHub login).
+      - name: Publish test APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk RozanaPay-test.apk
+          gh release view android-test >/dev/null 2>&1 || \
+            gh release create android-test --prerelease --title "RozanaPay test app (Android)" \
+              --notes "Test build for pilot users. Not for Google Play. Updated automatically on every change."
+          gh release upload android-test RozanaPay-test.apk --clobber
+
       - name: Build signed release AAB (for Google Play)
-        if: ${{ env.KS != '' }}
+        if: env.HAS_KEYSTORE == 'true'
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
