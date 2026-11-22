@@ -52,7 +52,7 @@ jobs:
           AAPT=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)aapt
           $AAPT dump permissions android/app/build/outputs/apk/debug/app-debug.apk
           echo "--- services / receivers / providers in the manifest ---"
-          $AAPT dump xmltree android/app/build/outputs/apk/debug/app-debug.apk --file AndroidManifest.xml | grep -E "E: (service|receiver|provider|activity)|A: android:name" | head -60
+          $AAPT dump xmltree android/app/build/outputs/apk/debug/app-debug.apk AndroidManifest.xml | grep -E "E: (service|receiver|provider|activity)|A: android:name" | head -60
 
       - uses: actions/upload-artifact@v4
         with:
