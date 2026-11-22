@@ -518,6 +518,21 @@ const translations = {
   'sk.c.ncfe.what': { en: 'Free course on banking, savings, insurance, pensions and avoiding fraud, from a body set up by RBI, SEBI, IRDAI and PFRDA.', hi: 'बैंकिंग, बचत, बीमा, पेंशन और धोखे से बचाव पर मुफ़्त कोर्स, RBI, SEBI, IRDAI और PFRDA द्वारा बनाई संस्था से।' },
   'sk.c.ncfe.how': { en: 'Register on the website; about 5 hours in short 15–20 minute modules.', hi: 'वेबसाइट पर रजिस्टर करें; लगभग 5 घंटे, 15–20 मिनट के छोटे हिस्सों में।' },
 
+  'sk.lessonsShort': { en: 'money lessons done', hi: 'पैसों की सीख पूरी' },
+  'sk.open': { en: 'Learn', hi: 'सीखें' },
+
+  // Loans page
+  'loanpg.title': { en: 'Micro Loans', hi: 'छोटे लोन' },
+  'loanpg.titleScore': { en: 'Credit Score', hi: 'क्रेडिट स्कोर' },
+  'loanpg.yourScore': { en: 'Your Credit Score', hi: 'आपका क्रेडिट स्कोर' },
+  'loanpg.maxEligible': { en: 'Max eligible', hi: 'अधिकतम पात्रता' },
+  'loanpg.apply': { en: 'Apply for Loan', hi: 'लोन के लिए आवेदन करें' },
+  'loanpg.yourLoans': { en: 'Your Loans ({n} active)', hi: 'आपके लोन ({n} चालू)' },
+  'loanpg.none': { en: 'No loans yet', hi: 'अभी कोई लोन नहीं' },
+  'loanpg.soonTitle': { en: 'Small loans are coming', hi: 'छोटे लोन जल्द आ रहे हैं' },
+  'loanpg.soonBody': { en: 'Loans will come only through a licensed bank or NBFC partner. Until then, build your score: log income every day, save regularly and learn how loan interest works.', hi: 'लोन सिर्फ़ लाइसेंस वाले बैंक या NBFC पार्टनर से मिलेंगे। तब तक अपना स्कोर बनाएं: रोज़ कमाई लिखें, नियमित बचत करें और समझें कि लोन का ब्याज कैसे काम करता है।' },
+  'loanpg.learn': { en: 'Learn about loan interest', hi: 'लोन के ब्याज के बारे में सीखें' },
+
   // Safe to spend: savings suggestion
   'sts.saveTitle': { en: 'Try saving ₹{n} a day', hi: 'रोज़ ₹{n} बचाने की कोशिश करें' },
   'sts.saveBody': { en: 'That is about ₹{m} a month from your spare money — a good start for an emergency fund.', hi: 'यह आपके बचे पैसों से महीने में लगभग ₹{m} है — मुसीबत के फ़ंड की अच्छी शुरुआत।' },

@@ -5,6 +5,12 @@ export const FEATURES = {
   phoneLogin: false,
   /** "Continue with Google". Needs the Google provider enabled in Supabase Auth. */
   googleLogin: false,
+  /**
+   * Loan applications. OFF until a licensed NBFC/bank partner is live (and the
+   * app is on RBI's list of lending apps). The server enforces the same rule via
+   * app_settings.lending_enabled — keep the two in step.
+   */
+  lending: false,
 };
 
 /**

@@ -6,6 +6,8 @@ import MobileLayout from "@/components/MobileLayout";
 import { Plus, PiggyBank, CreditCard, ArrowUpRight, ArrowDownLeft, TrendingUp, Bell, Coins, Shield, Gift, LayoutGrid, Moon, Sun, Minus, LogOut, ChevronRight, Wallet, Zap, Mic, Landmark, Award, GraduationCap } from "lucide-react";
 import { useState } from "react";
 import { useSafeToSpend } from "@/hooks/use-safe-to-spend";
+import { FEATURES } from "@/lib/features";
+import { LESSONS, readDone } from "@/lib/skills";
 import VoiceLogSheet from "@/components/VoiceLogSheet";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/hooks/use-language";
@@ -35,6 +37,7 @@ export default function Dashboard() {
   const activeLoans = loans.filter(l => ['disbursed', 'active', 'overdue'].includes(l.status || ''));
   const [voiceOpen, setVoiceOpen] = useState(false);
   const { data: safe } = useSafeToSpend();
+  const lessonsDone = readDone().length;
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
   const totalLoanBorrowed = loans.filter(l => ['disbursed', 'active', 'overdue', 'repaid', 'closed'].includes(l.status || '')).reduce((s, l) => s + l.amount, 0);
   const totalLoanRepaid = loans.reduce((s, l) => s + l.repaid_amount, 0);
@@ -47,7 +50,9 @@ export default function Dashboard() {
     { icon: Plus, label: t('dash.addIncome'), emoji: "💰", bg: "gradient-primary", shadow: "shadow-glow", path: "/income" },
     { icon: PiggyBank, label: t('dash.saveMoney'), emoji: "🐷", bg: "gradient-success", shadow: "shadow-glow-success", path: "/savings" },
     { icon: Minus, label: t('expense.addExpense'), emoji: "💸", bg: "gradient-warm", shadow: "shadow-glow-secondary", path: "/expenses" },
-    { icon: CreditCard, label: t('dash.getLoan'), emoji: "⚡", bg: "gradient-cool", shadow: "", path: "/loans" },
+    FEATURES.lending
+      ? { icon: CreditCard, label: t('dash.getLoan'), emoji: "⚡", bg: "gradient-cool", shadow: "", path: "/loans" }
+      : { icon: TrendingUp, label: t('svc.credit'), emoji: "📈", bg: "gradient-cool", shadow: "", path: "/loans" },
   ];
 
   const greeting = () => {
@@ -253,6 +258,8 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {FEATURES.lending ? (
+          <>
           {/* Active Loans */}
           <div className="bg-card rounded-2xl p-4 shadow-card border border-border/50 relative overflow-hidden">
             <div className="absolute -top-2 -right-2 text-3xl opacity-10">💳</div>
@@ -272,6 +279,24 @@ export default function Dashboard() {
               </button>
             )}
           </div>
+          </>
+          ) : (
+          /* Learn & Grow progress (while loans are off) */
+          <button onClick={() => navigate('/skills')} className="bg-card rounded-2xl p-4 shadow-card border border-border/50 relative overflow-hidden text-left">
+            <div className="absolute -top-2 -right-2 text-3xl opacity-10">🎓</div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center">
+                <GraduationCap className="h-3.5 w-3.5 text-white" />
+              </div>
+              <span className="text-[11px] text-muted-foreground font-bold">{t('sk.service')}</span>
+            </div>
+            <p className="text-3xl font-black text-foreground">{lessonsDone}/{LESSONS.length}</p>
+            <p className="text-xs text-muted-foreground mt-1 font-semibold">{t('sk.lessonsShort')}</p>
+            <span className="mt-2 text-xs text-primary font-bold flex items-center gap-0.5">
+              {t('sk.open')} <ChevronRight className="h-3 w-3" />
+            </span>
+          </button>
+          )}
         </motion.div>
 
         {/* Services Carousel */}

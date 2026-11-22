@@ -3,6 +3,9 @@ import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import "./index.css";
 import { initNative } from "./lib/native";
+import { installErrorReporting } from "./lib/track";
+
+installErrorReporting();
 
 // Register service worker for PWA — guarded against Lovable preview, iframes, dev, and Capacitor
 if ('serviceWorker' in navigator) {

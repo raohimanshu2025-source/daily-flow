@@ -58,9 +58,11 @@ Users have low digital literacy: big tap targets, little text, Hindi + English t
 - Safe to spend (`/safe-to-spend`, dashboard card): next-7-day income forecast in `src/lib/forecast.ts` (weighted weekday profile + calibrated careful estimate), method chosen by backtest in `ml/cashflow-forecast/` (simulated data; see its MODEL_CARD). Python/TS parity tests there.
 - Govt benefits finder (`/benefits`): on-device eligibility rules in `src/lib/benefits.ts`; re-check schemes and bump `BENEFITS_CHECKED_ON`.
 - Learn & Grow (`/skills`): in-app money lessons + links to free official courses (Skill India Digital Hub/PMKVY, NCFE) in `src/lib/skills.ts`; text under `sk.*` in i18n. Lesson progress is per-device (localStorage) plus `lesson_done` events. Re-check links and bump `SKILLS_CHECKED_ON`. Product order: Save → Learn → Borrow small → Invest (investing only later, through a SEBI-registered partner).
-- Feature switches in `src/lib/features.ts`: `FEATURES` (phone OTP and Google login, off until configured) and `LIVE_SERVICES` (UPI QR, BNPL, gold, insurance, bills, group savings, rewards: off = honest Coming soon page, `src/pages/ComingSoon.tsx`). Turn one on only when its partner integration really works.
+- Feature switches in `src/lib/features.ts`: `FEATURES` (phone OTP, Google login and `lending`, all off until configured; `lending` must match `app_settings.lending_enabled`, which the server enforces in `guard_loan_insert`) and `LIVE_SERVICES` (UPI QR, BNPL, gold, insurance, bills, group savings, rewards: off = honest Coming soon page, `src/pages/ComingSoon.tsx`). Turn one on only when its partner integration really works.
 - Two-person rule (migration `20261117000000_no_self_approval.sql`): an admin cannot disburse/approve their own loan or review their own KYC. Users can submit their own KYC (status → `submitted`).
 - Pilot events: `public.app_events` (RLS: insert/view own, admins view all; cascade on user delete) written by `track()` in `src/lib/track.ts`; never store typed amounts, quiz answers, documents, chat text or audio. Daily summary view `public.pilot_daily_engagement`.
+- Crash reporting: `installErrorReporting()` (in `src/main.tsx`) stores uncaught errors as `client_error` events (message truncated, digits/emails stripped).
+- Tests: `npm run test:unit` (node:test on `tests/*.test.mts`: benefits, forecast, translation coverage) + forecast parity tests; GitHub Actions `.github/workflows/ci.yml` runs them and `npm run build`.
 - AI functions (`chat`, `smart-nudges`) need the `AI_API_KEY` secret (any OpenAI-compatible API; defaults to Gemini). `chat` requires a signed-in user's token.
 
 ## Rules
@@ -72,4 +74,4 @@ Users have low digital literacy: big tap targets, little text, Hindi + English t
 
 ## Known gaps (next work)
 Done since the move: honest landing stats, Privacy/Terms (`/privacy`, `/terms`, content in `src/lib/legal.ts`), account deletion (`delete-account` function), real Transactions page, honest loan KFS (no fake lender/grievance contacts), Capacitor appId `in.rozanapay.app` with no Lovable `server` block.
-Still open: real payment rails (Razorpay/Cashfree + webhooks into ledger, then set `simulated_repayments` off), real KYC provider (DigiLocker/Digio), SMS provider for phone OTP, tests + CI, error monitoring, Play Store assets, demo-only screens on `src/lib/store.ts` (Gold, Insurance, Bills, Group Savings, UPI QR), real NBFC partner in the KFS.
+Still open: real payment rails (Razorpay/Cashfree + webhooks into ledger, then set `simulated_repayments` off), real KYC provider (DigiLocker/Digio), SMS provider for phone OTP, Play Store assets (see the launch guide), UI tests, demo-only screens on `src/lib/store.ts` (Gold, Insurance, Bills, Group Savings, UPI QR), real NBFC partner in the KFS.

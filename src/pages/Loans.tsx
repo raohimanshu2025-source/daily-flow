@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { FEATURES } from "@/lib/features";
+import { useNavigate } from "react-router-dom";
+import { GraduationCap } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 import { useLoans, useAddLoan, useProfile, useLoanLedger, useRepayLoan, useUpiMandate, useCreateMandate, useRevokeMandate } from "@/hooks/use-cloud-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -146,6 +150,9 @@ function CreditScorePanel({ latest, recomputing, onRecompute }: { latest: any; r
 }
 
 export default function Loans() {
+  useLanguage();
+  const navigate = useNavigate();
+  const lending = FEATURES.lending;
   const [showApply, setShowApply] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(2000);
   const [selectedDuration, setSelectedDuration] = useState(14);
@@ -237,15 +244,15 @@ export default function Loans() {
   return (
     <MobileLayout>
       <div className="px-5 pt-6">
-        <h1 className="text-xl font-bold text-foreground mb-4">Micro Loans</h1>
+        <h1 className="text-xl font-bold text-foreground mb-4">{lending ? t("loanpg.title") : t("loanpg.titleScore")}</h1>
 
         <div className="gradient-primary rounded-2xl p-5 mb-6 shadow-elevated">
-          <p className="text-primary-foreground/70 text-sm mb-1">Your Credit Score</p>
+          <p className="text-primary-foreground/70 text-sm mb-1">{t("loanpg.yourScore")}</p>
           <h2 className="text-3xl font-bold text-primary-foreground mb-2">{profile?.credit_score || 300}</h2>
           <div className="w-full h-2 rounded-full bg-primary-foreground/20">
             <div className="h-full rounded-full bg-primary-foreground transition-all" style={{ width: `${((profile?.credit_score || 300) / 900) * 100}%` }} />
           </div>
-          <p className="text-xs text-primary-foreground/60 mt-2">Max eligible: ₹{Math.min((profile?.credit_score || 300) * 15, 10000).toLocaleString("en-IN")}</p>
+          {lending && <p className="text-xs text-primary-foreground/60 mt-2">{t("loanpg.maxEligible")}: ₹{Math.min((profile?.credit_score || 300) * 15, 10000).toLocaleString("en-IN")}</p>}
         </div>
 
         <CreditScorePanel
@@ -254,12 +261,25 @@ export default function Loans() {
           onRecompute={handleRecompute}
         />
 
+        {lending ? (
         <button onClick={() => setShowApply(true)}
           className="w-full py-3.5 rounded-xl gradient-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 mb-6 active:scale-[0.98] transition-transform shadow-card">
-          <CreditCard className="h-5 w-5" /> Apply for Loan
+          <CreditCard className="h-5 w-5" /> {t("loanpg.apply")}
         </button>
+        ) : (
+        <div className="bg-card rounded-2xl p-5 shadow-card mb-6 text-center">
+          <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">{t("soon.badge")}</p>
+          <p className="text-lg font-extrabold text-foreground mb-1">{t("loanpg.soonTitle")}</p>
+          <p className="text-sm text-muted-foreground mb-4">{t("loanpg.soonBody")}</p>
+          <button onClick={() => navigate("/skills")}
+            className="w-full py-3 rounded-xl bg-primary/10 text-primary text-sm font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+            <GraduationCap className="h-4 w-4" /> {t("loanpg.learn")}
+          </button>
+        </div>
+        )}
 
-        <h3 className="font-semibold text-foreground mb-3">Your Loans ({activeLoans.length} active)</h3>
+        {(lending || loans.length > 0) && <>
+        <h3 className="font-semibold text-foreground mb-3">{tf("loanpg.yourLoans", { n: activeLoans.length })}</h3>
         <div className="space-y-3">
           {loans.map((loan) => {
             const cfg = statusConfig[loan.status || 'pending'];
@@ -298,8 +318,9 @@ export default function Loans() {
               </div>
             );
           })}
-          {loans.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">No loans yet</p>}
+          {loans.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">{t("loanpg.none")}</p>}
         </div>
+        </>}
       </div>
 
       {repayLoanId && (
@@ -310,7 +331,7 @@ export default function Loans() {
         />
       )}
 
-      {showApply && (
+      {lending && showApply && (
         <div className="fixed inset-0 bg-foreground/50 z-50 flex items-end">
           <div className="bg-card w-full max-w-md mx-auto rounded-t-3xl p-6 animate-slide-up">
             <div className="flex items-center justify-between mb-6">

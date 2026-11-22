@@ -31,3 +31,24 @@ export function trackDailyOpen() {
   }
   track("app_open");
 }
+
+let errorsSent = 0;
+
+/**
+ * Lightweight crash reporting with no extra service: uncaught errors are stored
+ * as `client_error` events (signed-in users only). Only a short error message,
+ * the page path and the app build are kept — never form contents.
+ */
+export function installErrorReporting() {
+  const send = (kind: string, message: unknown) => {
+    if (errorsSent >= 5) return; // at most 5 per page load
+    errorsSent++;
+    const msg = String((message as any)?.message ?? message ?? "unknown")
+      .replace(/\b\d{6,}\b/g, "#")          // drop long digit runs (phone, account, OTP)
+      .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "@") // drop email addresses
+      .slice(0, 160);
+    track("client_error", { kind, msg, page: window.location.pathname.slice(0, 60) });
+  };
+  window.addEventListener("error", (e) => send("error", e.error ?? e.message));
+  window.addEventListener("unhandledrejection", (e) => send("promise", e.reason));
+}

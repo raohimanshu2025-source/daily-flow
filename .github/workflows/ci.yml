@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit tests (benefits, forecast, translations)
+        run: node --experimental-strip-types --test tests/*.test.mts
+      - name: Forecast parity and end-to-end checks
+        run: |
+          node --experimental-strip-types ml/cashflow-forecast/tests/parity.test.mts
+          node --experimental-strip-types ml/cashflow-forecast/tests/safe.test.mts
+      - name: Build
+        run: npm run build
